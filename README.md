@@ -23,6 +23,10 @@
 
 Powered by modern Large Language Models via any OpenAI-compatible API, `tolkienizer` brings the elevated cadence, solemn gravity, and mythic wonder of Middle-earth directly to your terminal.
 
+<p align="center">
+  <img src="assets/demo.gif" alt="tolkienizer demo" width="100%">
+</p>
+
 ---
 
 ## Features
