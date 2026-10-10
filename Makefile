@@ -1,5 +1,5 @@
 CC ?= clang
-CFLAGS ?= -std=c99 -Wall -Wextra -pedantic -O2
+CFLAGS ?= -std=c99 -Wall -Wextra -pedantic -Wno-overlength-strings -O2
 INCLUDES = -Iinclude
 
 # Detect cJSON flags via pkg-config, with fallback for Homebrew and standard paths
