@@ -3,9 +3,9 @@ Output assets/demo.gif
 
 # Terminal appearance settings
 Set Shell "zsh"
-Set FontSize 16
+Set FontSize 20
 Set Width 1200
-Set Height 650
+Set Height 700
 Set Padding 30
 Set WindowBar Colorful
 Set WindowBarSize 36
