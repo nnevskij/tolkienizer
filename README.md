@@ -38,8 +38,24 @@
 
 ## 🚀 Installazione
 
-### 1. Prerequisiti
+### Metodo 1: Tramite Homebrew (Consigliato per macOS e Linux)
 
+Il modo più rapido per installare e mantenere aggiornato `tolkienizer`:
+
+```bash
+# Aggiungi il tap e installa
+brew tap nnevskij/tap
+brew install tolkienizer
+
+# Oppure installa direttamente in un unico passaggio:
+brew install nnevskij/tap/tolkienizer
+```
+
+---
+
+### Metodo 2: Compilazione da sorgente
+
+#### Prerequisiti
 Assicurati di avere installato un compilatore C, `libcurl` e `cJSON`:
 
 - **macOS** (Homebrew):
