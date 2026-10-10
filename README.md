@@ -12,6 +12,7 @@
 [![Language: C99](https://img.shields.io/badge/Language-C99-00599C.svg)](https://en.wikipedia.org/wiki/C99)
 [![Homebrew](https://img.shields.io/badge/Homebrew-Tap-orange.svg)](#homebrew-macos--linux)
 [![Platforms](https://img.shields.io/badge/Platforms-macOS%20%7C%20Linux-lightgrey.svg)](#installation)
+[![Vibe-Coded](https://img.shields.io/badge/Vibe--Coded-100%25-blueviolet.svg)](#disclaimer)
 [![Build Status](https://img.shields.io/badge/Build-Passing-brightgreen.svg)](https://github.com/nnevskij/tolkienizer/actions)
 
 ---
@@ -321,6 +322,12 @@ tolkienizer/
     ├── prompts.c       # Narrative prompt definitions and language normalizer
     └── utils.c         # System utilities and background spinner thread
 ```
+
+---
+
+## Disclaimer
+
+This software was developed entirely through vibe-coding with AI pair programming. While engineered in clean standard C (C99) with careful consideration for performance, memory safety, and cross-platform POSIX compliance, it was conceived, shaped, and refined in pure conversational, prompt-driven flow. Use it with joy, experiment freely, and may your terminal adventures be blessed by the wisdom of the Eldar.
 
 ---
 
