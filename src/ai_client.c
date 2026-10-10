@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 #include <curl/curl.h>
 #include <cJSON.h>
 
@@ -41,6 +42,21 @@ int ai_transform_text(const tolkienizer_config_t *cfg,
 
     *out_response = NULL;
     *out_error = NULL;
+
+    const char *demo_mode = getenv("TOLKIENIZER_DEMO");
+    if (demo_mode && strcmp(demo_mode, "1") == 0) {
+        usleep(1200000); /* 1.2s smooth animated spinner */
+        if (strstr(system_prompt, "Comt") || strstr(system_prompt, "Shire") || strstr(system_prompt, "Contea") || strstr(system_prompt, "Comarca") || strstr(system_prompt, "Auenland")) {
+            *out_response = safe_strdup("I must take a jaunt to the market for fine tea and butter,\nas a respectable halfling's pantry should never be caught in want.");
+        } else if (strstr(system_prompt, "Mordor") || strstr(system_prompt, "Dark Tower") || strstr(system_prompt, "Barad-d") || strstr(system_prompt, "Torre Oscura") || strstr(system_prompt, "Tour Sombre") || strstr(system_prompt, "Dunklen Turm")) {
+            *out_response = safe_strdup("The release must be unleashed upon the world ere Friday's twilight,\nlest the shadows claim your delay.");
+        } else if (strstr(system_prompt, "Eldar") || strstr(system_prompt, "Elven") || strstr(system_prompt, "Elfici") || strstr(system_prompt, "Élficos") || strstr(system_prompt, "Erstgeborenen")) {
+            *out_response = safe_strdup("May the starlight of Elbereth guide our journey,\nfor ancient memories fade not and peace rests upon the woodland realm.");
+        } else {
+            *out_response = safe_strdup("The great engine of the data-vault hath fallen into darkness,\nbrought low by the relentless tide of exhaustion.");
+        }
+        return 0;
+    }
 
     /* Build endpoint URL */
     char endpoint[1024];

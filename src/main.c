@@ -361,7 +361,11 @@ int main(int argc, char *argv[]) {
     }
 
     if (response) {
-        printf("%s\n", response);
+        if (isatty(STDOUT_FILENO)) {
+            printf("\n%s\n\n", response);
+        } else {
+            printf("%s\n", response);
+        }
         free(response);
     }
 
