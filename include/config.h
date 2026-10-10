@@ -6,6 +6,7 @@
 #define DEFAULT_BASE_URL    "https://api.openai.com/v1"
 #define DEFAULT_MODEL       "gpt-4o-mini"
 #define DEFAULT_STYLE       "epic"
+#define DEFAULT_LANGUAGE    "en"
 #define DEFAULT_TEMPERATURE 0.7
 
 typedef struct {
@@ -13,6 +14,7 @@ typedef struct {
     char *base_url;
     char *model;
     char *default_style;
+    char *language;
     double temperature;
 } tolkienizer_config_t;
 
@@ -33,6 +35,7 @@ int config_set_key(const char *key);
 int config_set_model(const char *model);
 int config_set_url(const char *url);
 int config_set_style(const char *style);
+int config_set_lang(const char *lang);
 
 /* Display active configuration in a safe human-readable format */
 void config_show(const tolkienizer_config_t *cfg);

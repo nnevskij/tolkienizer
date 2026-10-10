@@ -1,13 +1,33 @@
 #ifndef TOLKIENIZER_PROMPTS_H
 #define TOLKIENIZER_PROMPTS_H
 
-/* Returns the system prompt for the specified style.
- * Supported styles: "epic" (default), "hobbit", "elvish", "mordor".
- * If style_name is NULL or unknown, returns the default "epic" prompt.
+/* Returns an allocated system prompt for the specified style and language.
+ * Caller is responsible for calling free() on the returned string.
+ *
+ * Supported styles:
+ *   - "epic"   (default): Chronicler of Ancient Lands
+ *   - "hobbit"          : Tale-spinner of the Shire
+ *   - "elvish"          : Lore-singer of the Elven Havens
+ *   - "mordor"          : Voice of the Dark Tower
+ *
+ * Supported languages:
+ *   - "en" (default)    : English
+ *   - "it"              : Italian
+ *   - "es"              : Spanish
+ *   - "fr"              : French
+ *   - "de"              : German
+ *   - "auto"            : Preserve/detect input language
+ *   - Custom            : Any language code or name (e.g. "ja", "pt", "Latin")
  */
-const char *prompt_get_by_style(const char *style_name);
+char *prompt_get(const char *style_name, const char *lang_name);
 
 /* List available style names */
 void prompt_list_styles(void);
+
+/* List supported languages */
+void prompt_list_languages(void);
+
+/* Normalizes language code or name (e.g. "english" -> "en", "italiano" -> "it") */
+const char *prompt_normalize_language(const char *lang);
 
 #endif /* TOLKIENIZER_PROMPTS_H */

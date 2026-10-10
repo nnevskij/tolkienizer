@@ -13,7 +13,7 @@
 #include "utils.h"
 
 #define PROGRAM_NAME    "tolkienizer"
-#define PROGRAM_VERSION "1.0.0"
+#define PROGRAM_VERSION "1.1.0"
 
 static void print_version(void) {
     printf("%s version %s\n", PROGRAM_NAME, PROGRAM_VERSION);
@@ -27,20 +27,24 @@ static void print_usage(const char *prog_name) {
     printf("  TESTO...                  Testo da trasformare direttamente da riga di comando\n");
     printf("  -f, --file FILE           Legge il testo da un file\n");
     printf("  (pipe / stdin)            Accetta testo via standard input (es. echo \"testo\" | %s)\n\n", prog_name);
-    printf("Opzioni di stile ed esecuzione:\n");
+    printf("Opzioni di lingua e stile:\n");
+    printf("  -l, --lang LINGUA         Lingua target: en (default), it, es, fr, de, auto (o personalizzata)\n");
     printf("  -s, --style STILE         Stile Tolkien: epic (default), hobbit, elvish, mordor\n");
-    printf("  -p, --prompt TESTO        System prompt personalizzato (sovrascrive lo stile)\n");
+    printf("  -p, --prompt TESTO        System prompt personalizzato (sovrascrive stile e lingua)\n");
+    printf("      --list-langs          Elenca le lingue disponibili e le opzioni multilingua\n");
+    printf("      --list-styles         Elenca tutti gli stili narrativi disponibili\n\n");
+    printf("Opzioni di esecuzione:\n");
     printf("  -m, --model MODELLO       Modello AI (default: da configurazione o gpt-4o-mini)\n");
     printf("  -k, --key CHIAVE          Chiave API per questa singola esecuzione\n");
     printf("  -u, --url URL             URL di base API (default: https://api.openai.com/v1)\n");
     printf("  -t, --temp FLOAT          Temperatura di generazione (0.0 - 2.0, default: 0.7)\n");
     printf("  -q, --quiet               Modalità silenziosa (nessun indicatore di caricamento)\n");
-    printf("      --list-styles         Elenca tutti gli stili narrativi disponibili\n");
     printf("  -v, --version             Mostra la versione del programma\n");
     printf("  -h, --help                Mostra questo messaggio di aiuto\n\n");
     printf("Gestione configurazione e chiavi API:\n");
     printf("      --config              Avvia il wizard interattivo di configurazione\n");
     printf("      --set-key CHIAVE      Salva la chiave API nel file di configurazione\n");
+    printf("      --set-lang LINGUA     Salva la lingua predefinita (en, it, es, fr, de, auto)\n");
     printf("      --set-model MODELLO   Salva il modello predefinito nella configurazione\n");
     printf("      --set-url URL         Salva l'endpoint API nella configurazione\n");
     printf("      --set-style STILE     Salva lo stile predefinito nella configurazione\n");
@@ -48,16 +52,17 @@ static void print_usage(const char *prog_name) {
     printf("Provider supportati:\n");
     printf("  OpenAI, Groq, Google Gemini (OpenAI endpoint), OpenRouter, Ollama (locale).\n\n");
     printf("Esempi:\n");
-    printf("  %s \"Oggi il server di produzione è andato in crash\"\n", prog_name);
-    printf("  %s -s hobbit \"Devo andare a fare la spesa al supermercato\"\n", prog_name);
-    printf("  echo \"Ho finito i task dello sprint\" | %s\n", prog_name);
-    printf("  %s -f report.txt > report_epico.txt\n", prog_name);
+    printf("  %s \"The production server crashed due to out of memory\"\n", prog_name);
+    printf("  %s -l it \"Oggi il server di produzione è andato in crash\"\n", prog_name);
+    printf("  %s -l es -s hobbit \"Tengo que ir al mercado a comprar pan y queso\"\n", prog_name);
+    printf("  %s -l fr -s elvish \"Le soleil se couche sur la forêt enchantée\"\n", prog_name);
+    printf("  echo \"I finished all sprint tasks\" | %s -s epic\n", prog_name);
 }
 
 static void print_missing_key_guide(void) {
     fprintf(stderr, "\n\033[1;31m[!] Nessuna chiave API configurata.\033[0m\n\n");
     fprintf(stderr, "Per usare %s, configura la tua chiave API in uno dei seguenti modi:\n\n", PROGRAM_NAME);
-    fprintf(stderr, "  1. Configurazione interattiva guidata (scelta provider e chiave):\n");
+    fprintf(stderr, "  1. Configurazione interattiva guidata (scelta provider, lingua e chiave):\n");
     fprintf(stderr, "     \033[1;32m%s --config\033[0m\n\n", PROGRAM_NAME);
     fprintf(stderr, "  2. Salvataggio diretto della chiave nel tuo profilo utente:\n");
     fprintf(stderr, "     \033[1;32m%s --set-key \"tua-chiave-api\"\033[0m\n\n", PROGRAM_NAME);
@@ -75,6 +80,7 @@ int main(int argc, char *argv[]) {
     char *file_path = NULL;
     char *custom_prompt = NULL;
     char *cli_style = NULL;
+    char *cli_lang = NULL;
     bool quiet = false;
 
     /* Long options flags */
@@ -84,8 +90,10 @@ int main(int argc, char *argv[]) {
         OPT_SET_MODEL,
         OPT_SET_URL,
         OPT_SET_STYLE,
+        OPT_SET_LANG,
         OPT_SHOW_CONFIG,
-        OPT_LIST_STYLES
+        OPT_LIST_STYLES,
+        OPT_LIST_LANGS
     };
 
     static struct option long_options[] = {
@@ -93,6 +101,8 @@ int main(int argc, char *argv[]) {
         {"version",     no_argument,       NULL, 'v'},
         {"file",        required_argument, NULL, 'f'},
         {"style",       required_argument, NULL, 's'},
+        {"lang",        required_argument, NULL, 'l'},
+        {"language",    required_argument, NULL, 'l'},
         {"prompt",      required_argument, NULL, 'p'},
         {"model",       required_argument, NULL, 'm'},
         {"key",         required_argument, NULL, 'k'},
@@ -104,13 +114,15 @@ int main(int argc, char *argv[]) {
         {"set-model",   required_argument, NULL, OPT_SET_MODEL},
         {"set-url",     required_argument, NULL, OPT_SET_URL},
         {"set-style",   required_argument, NULL, OPT_SET_STYLE},
+        {"set-lang",    required_argument, NULL, OPT_SET_LANG},
         {"show-config", no_argument,       NULL, OPT_SHOW_CONFIG},
         {"list-styles", no_argument,       NULL, OPT_LIST_STYLES},
+        {"list-langs",  no_argument,       NULL, OPT_LIST_LANGS},
         {NULL,          0,                 NULL, 0}
     };
 
     int opt;
-    while ((opt = getopt_long(argc, argv, "hvf:s:p:m:k:u:t:q", long_options, NULL)) != -1) {
+    while ((opt = getopt_long(argc, argv, "hvf:s:l:p:m:k:u:t:q", long_options, NULL)) != -1) {
         switch (opt) {
             case 'h':
                 print_usage(argv[0]);
@@ -125,6 +137,9 @@ int main(int argc, char *argv[]) {
                 break;
             case 's':
                 cli_style = safe_strdup(optarg);
+                break;
+            case 'l':
+                cli_lang = safe_strdup(optarg);
                 break;
             case 'p':
                 custom_prompt = safe_strdup(optarg);
@@ -194,12 +209,26 @@ int main(int argc, char *argv[]) {
                 config_free(&cfg);
                 return res;
             }
+            case OPT_SET_LANG: {
+                int res = config_set_lang(optarg);
+                if (res == 0) {
+                    fprintf(stderr, "\033[1;32m✓ Lingua predefinita aggiornata: %s\033[0m\n", optarg);
+                } else {
+                    fprintf(stderr, "\033[1;31m✗ Errore nel salvataggio della lingua.\033[0m\n");
+                }
+                config_free(&cfg);
+                return res;
+            }
             case OPT_SHOW_CONFIG:
                 config_show(&cfg);
                 config_free(&cfg);
                 return 0;
             case OPT_LIST_STYLES:
                 prompt_list_styles();
+                config_free(&cfg);
+                return 0;
+            case OPT_LIST_LANGS:
+                prompt_list_languages();
                 config_free(&cfg);
                 return 0;
             default:
@@ -219,6 +248,7 @@ int main(int argc, char *argv[]) {
             fprintf(stderr, "\033[1;31mErrore:\033[0m Impossibile leggere il file '%s'\n", file_path);
             free(file_path);
             free(cli_style);
+            free(cli_lang);
             free(custom_prompt);
             config_free(&cfg);
             return 1;
@@ -255,6 +285,7 @@ int main(int argc, char *argv[]) {
         fprintf(stderr, "Nessun testo fornito. Usa '%s --help' per la guida.\n", argv[0]);
         free(input_text);
         free(cli_style);
+        free(cli_lang);
         free(custom_prompt);
         config_free(&cfg);
         return 0;
@@ -284,6 +315,7 @@ int main(int argc, char *argv[]) {
             fprintf(stderr, "\033[1;31mOperazione annullata: chiave API non disponibile.\033[0m\n");
             free(input_text);
             free(cli_style);
+            free(cli_lang);
             free(custom_prompt);
             config_free(&cfg);
             return 1;
@@ -291,13 +323,16 @@ int main(int argc, char *argv[]) {
     }
 
     /* Choose system prompt */
-    const char *sys_prompt = NULL;
+    char *sys_prompt = NULL;
+    bool free_sys_prompt = false;
+
     if (custom_prompt) {
         sys_prompt = custom_prompt;
-    } else if (cli_style) {
-        sys_prompt = prompt_get_by_style(cli_style);
     } else {
-        sys_prompt = prompt_get_by_style(cfg.default_style);
+        const char *selected_style = cli_style ? cli_style : cfg.default_style;
+        const char *selected_lang = cli_lang ? cli_lang : cfg.language;
+        sys_prompt = prompt_get(selected_style, selected_lang);
+        free_sys_prompt = true;
     }
 
     /* Show loading spinner if not quiet and stderr is a terminal */
@@ -318,7 +353,9 @@ int main(int argc, char *argv[]) {
         free(error_msg);
         free(input_text);
         free(cli_style);
+        free(cli_lang);
         free(custom_prompt);
+        if (free_sys_prompt) free(sys_prompt);
         config_free(&cfg);
         return 1;
     }
@@ -330,7 +367,9 @@ int main(int argc, char *argv[]) {
 
     free(input_text);
     free(cli_style);
+    free(cli_lang);
     free(custom_prompt);
+    if (free_sys_prompt) free(sys_prompt);
     config_free(&cfg);
 
     return 0;

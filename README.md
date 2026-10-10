@@ -19,8 +19,14 @@
   - `hobbit`: Tono caldo, accogliente e bucolico della Contea tra seconde colazioni ed erba-pipa.
   - `elvish`: Melodica, malinconica ed elevata prosa elfica sotto la luce delle stelle di Elbereth.
   - `mordor`: Oscura, aspra e pesante prosa d'ombra, ferro e fuoco di Barad-dûr.
-  - Custom: System prompt totalmente personalizzabile con `-p` / `--prompt`.
-- **Preservazione della lingua**: Mantiene rigorosamente la lingua di partenza (se il testo è in italiano, genera italiano aulico e letterario ispirato alle migliori traduzioni tolkieniane; se in inglese, nobile inglese arcaico).
+- **Supporto multi-lingua nativo**:
+  - **Inglese** (`en`, default): La prosa epica inconfondibile di J.R.R. Tolkien.
+  - **Italiano** (`it`): Italiano aulico ed epico tolkieniano (*Alliata / Fatica*).
+  - **Spagnolo** (`es`): Castellano solemne y épico.
+  - **Francese** (`fr`): Haut français noble et épique.
+  - **Tedesco** (`de`): Edles, archaisches Hochdeutsch der Vorzeit.
+  - **Auto** (`auto`): Rileva e preserva automaticamente la lingua del testo originale.
+  - Qualsiasi altra lingua specificabile tramite codice o nome (es. `-l ja`, `-l pt`, `-l la`).
 - **Gestione sicura delle chiavi API (Nessuna chiave hardcoded)**:
   - Configurazione guidata interattiva con `tolkienizer --config`.
   - Salvataggio sicuro in `~/.config/tolkienizer/config.json` con permessi ristretti `0600`.
@@ -143,21 +149,37 @@ tolkienizer --show-config
 
 ## 📖 Esempi di utilizzo
 
-### 1. Passaggio come argomento diretto
+### 1. Selezione della lingua (`-l, --lang`)
 ```bash
-tolkienizer "Oggi il server di database è andato in crash a causa della memoria esaurita."
+# Inglese (predefinito: prosa epica tolkieniana originale)
+tolkienizer "The database server crashed due to out of memory error"
+
+# Italiano (italiano aulico tolkieniano)
+tolkienizer -l it "Oggi il server di database è andato in crash per mancanza di memoria."
+
+# Spagnolo (castellano solemne y épico)
+tolkienizer -l es "Tenemos que posponer la reunión de mañana por la tarde."
+
+# Francese (haut français noble et épique)
+tolkienizer -l fr "Le déploiement de la mise à jour a réussi sans aucune erreur."
+
+# Tedesco (edles, archaisches Hochdeutsch)
+tolkienizer -l de "Wir müssen die Festung vor Anbruch der Nacht sichern."
+
+# Auto (rileva e preserva automaticamente la lingua del testo fornito)
+tolkienizer -l auto "Devo ricordarmi di portare a spasso il cane"
 ```
 
-### 2. Diversi stili tolkieniani
+### 2. Diversi stili tolkieniani (`-s, --style`)
 ```bash
 # Stile Contea / Hobbit
-tolkienizer -s hobbit "Devo andare a fare la spesa al supermercato per comprare latte e biscotti."
+tolkienizer -l it -s hobbit "Devo andare a fare la spesa al supermercato per comprare latte e biscotti."
 
 # Stile Elfico
-tolkienizer -s elvish "Guardo il cielo stellato mentre la notte avvolge la città silenziosa."
+tolkienizer -l it -s elvish "Guardo il cielo stellato mentre la notte avvolge la città silenziosa."
 
 # Stile Mordor
-tolkienizer -s mordor "Il capo progetto ha anticipato la data di consegna di due settimane."
+tolkienizer -l it -s mordor "Il capo progetto ha anticipato la data di consegna di due settimane."
 ```
 
 ### 3. Pipeline Unix (`stdin`)

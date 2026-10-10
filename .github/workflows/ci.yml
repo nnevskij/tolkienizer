@@ -39,4 +39,5 @@ jobs:
         ./tolkienizer --version
         ./tolkienizer --help
         ./tolkienizer --list-styles
+        ./tolkienizer --list-langs
         ./tolkienizer --show-config

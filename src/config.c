@@ -14,6 +14,7 @@ void config_init(tolkienizer_config_t *cfg) {
     cfg->base_url = safe_strdup(DEFAULT_BASE_URL);
     cfg->model = safe_strdup(DEFAULT_MODEL);
     cfg->default_style = safe_strdup(DEFAULT_STYLE);
+    cfg->language = safe_strdup(DEFAULT_LANGUAGE);
     cfg->temperature = DEFAULT_TEMPERATURE;
 }
 
@@ -23,10 +24,12 @@ void config_free(tolkienizer_config_t *cfg) {
     free(cfg->base_url);
     free(cfg->model);
     free(cfg->default_style);
+    free(cfg->language);
     cfg->api_key = NULL;
     cfg->base_url = NULL;
     cfg->model = NULL;
     cfg->default_style = NULL;
+    cfg->language = NULL;
 }
 
 int config_load(tolkienizer_config_t *cfg) {
@@ -61,6 +64,12 @@ int config_load(tolkienizer_config_t *cfg) {
                 if (cJSON_IsString(item) && item->valuestring && strlen(item->valuestring) > 0) {
                     free(cfg->default_style);
                     cfg->default_style = safe_strdup(item->valuestring);
+                }
+
+                item = cJSON_GetObjectItemCaseSensitive(root, "language");
+                if (cJSON_IsString(item) && item->valuestring && strlen(item->valuestring) > 0) {
+                    free(cfg->language);
+                    cfg->language = safe_strdup(item->valuestring);
                 }
 
                 item = cJSON_GetObjectItemCaseSensitive(root, "temperature");
@@ -107,6 +116,12 @@ int config_load(tolkienizer_config_t *cfg) {
         cfg->default_style = safe_strdup(env_style);
     }
 
+    const char *env_lang = getenv("TOLKIENIZER_LANG");
+    if (env_lang && strlen(env_lang) > 0) {
+        free(cfg->language);
+        cfg->language = safe_strdup(env_lang);
+    }
+
     return 0;
 }
 
@@ -131,6 +146,7 @@ int config_save(const tolkienizer_config_t *cfg) {
     cJSON_AddStringToObject(root, "base_url", cfg->base_url ? cfg->base_url : DEFAULT_BASE_URL);
     cJSON_AddStringToObject(root, "model", cfg->model ? cfg->model : DEFAULT_MODEL);
     cJSON_AddStringToObject(root, "style", cfg->default_style ? cfg->default_style : DEFAULT_STYLE);
+    cJSON_AddStringToObject(root, "language", cfg->language ? cfg->language : DEFAULT_LANGUAGE);
     cJSON_AddNumberToObject(root, "temperature", cfg->temperature);
 
     char *json_str = cJSON_Print(root);
@@ -197,6 +213,16 @@ int config_set_style(const char *style) {
     return res;
 }
 
+int config_set_lang(const char *lang) {
+    tolkienizer_config_t cfg;
+    config_load(&cfg);
+    free(cfg.language);
+    cfg.language = safe_strdup(lang);
+    int res = config_save(&cfg);
+    config_free(&cfg);
+    return res;
+}
+
 void config_show(const tolkienizer_config_t *cfg) {
     char *cfg_path = get_config_file_path();
     fprintf(stderr, "\033[1;36m📜 Tolkienizer Configuration:\033[0m\n");
@@ -217,6 +243,7 @@ void config_show(const tolkienizer_config_t *cfg) {
     fprintf(stderr, "  Base URL    : %s\n", cfg->base_url ? cfg->base_url : DEFAULT_BASE_URL);
     fprintf(stderr, "  Model       : %s\n", cfg->model ? cfg->model : DEFAULT_MODEL);
     fprintf(stderr, "  Style       : %s\n", cfg->default_style ? cfg->default_style : DEFAULT_STYLE);
+    fprintf(stderr, "  Language    : %s\n", cfg->language ? cfg->language : DEFAULT_LANGUAGE);
     fprintf(stderr, "  Temperature : %.2f\n", cfg->temperature);
 }
 
@@ -238,7 +265,35 @@ int config_interactive_wizard(void) {
     fprintf(stderr, "\033[1;33m       Tolkienizer - Configuration Wizard         \033[0m\n");
     fprintf(stderr, "\033[1;33m🧙================================================🧙\033[0m\n\n");
 
-    fprintf(stderr, "Select your AI provider:\n");
+    /* 1. Language selection */
+    fprintf(stderr, "Select default language:\n");
+    fprintf(stderr, "  1) English (default: en)\n");
+    fprintf(stderr, "  2) Italian (it)\n");
+    fprintf(stderr, "  3) Spanish (es)\n");
+    fprintf(stderr, "  4) French (fr)\n");
+    fprintf(stderr, "  5) German (de)\n");
+    fprintf(stderr, "  6) Auto (preserve input language)\n\n");
+
+    char *lang_choice = read_line_prompt("Language [1-6, default: 1]: ", false);
+    int lang_opt = 1;
+    if (lang_choice && strlen(str_trim(lang_choice)) > 0) {
+        lang_opt = atoi(lang_choice);
+    }
+    free(lang_choice);
+
+    free(cfg.language);
+    switch (lang_opt) {
+        case 2: cfg.language = safe_strdup("it"); break;
+        case 3: cfg.language = safe_strdup("es"); break;
+        case 4: cfg.language = safe_strdup("fr"); break;
+        case 5: cfg.language = safe_strdup("de"); break;
+        case 6: cfg.language = safe_strdup("auto"); break;
+        case 1:
+        default: cfg.language = safe_strdup("en"); break;
+    }
+
+    /* 2. Provider selection */
+    fprintf(stderr, "\nSelect your AI provider:\n");
     fprintf(stderr, "  1) OpenAI (Default: gpt-4o-mini)\n");
     fprintf(stderr, "  2) Groq (Ultra-fast: llama-3.3-70b-versatile)\n");
     fprintf(stderr, "  3) Google Gemini (via OpenAI compat: gemini-2.0-flash)\n");

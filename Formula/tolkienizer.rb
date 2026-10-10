@@ -18,5 +18,6 @@ class Tolkienizer < Formula
   test do
     assert_match "tolkienizer version", shell_output("#{bin}/tolkienizer --version")
     assert_match "epic", shell_output("#{bin}/tolkienizer --list-styles")
+    assert_match "English", shell_output("#{bin}/tolkienizer --list-langs")
   end
 end
