@@ -1,0 +1,856 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tolkienizer - Transmute Ordinary Words into Middle-earth Prose</title>
+  <meta name="description" content="A high-performance command-line tool in pure C99 that transforms everyday text into the high-fantasy prose of J.R.R. Tolkien using AI.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  
+  <style>
+    :root {
+      --bg-base: #090c10;
+      --bg-surface: #0d1117;
+      --bg-card: #161b22;
+      --bg-card-hover: #1c2128;
+      --border-subtle: #21262d;
+      --border-gold: rgba(212, 175, 55, 0.3);
+      --gold-primary: #d4af37;
+      --gold-light: #f3e5ab;
+      --gold-hover: #e5c07b;
+      --text-main: #f0f6fc;
+      --text-muted: #8b949e;
+      --text-dim: #6e7681;
+      --accent-cyan: #38bdf8;
+      --accent-green: #3fb950;
+      --accent-purple: #a855f7;
+      --accent-red: #f87171;
+      --radius-sm: 6px;
+      --radius-md: 10px;
+      --radius-lg: 16px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg-base);
+      color: var(--text-main);
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      line-height: 1.6;
+      overflow-x: hidden;
+      background-image: 
+        radial-gradient(ellipse at 50% -20%, rgba(212, 175, 55, 0.08), transparent 60%),
+        radial-gradient(circle at 100% 50%, rgba(56, 189, 248, 0.03), transparent 40%);
+    }
+
+    a {
+      color: var(--gold-primary);
+      text-decoration: none;
+      transition: color 0.2s ease;
+    }
+
+    a:hover {
+      color: var(--gold-hover);
+    }
+
+    code, pre {
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .container {
+      max-width: 1140px;
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+
+    /* Navigation */
+    header {
+      border-bottom: 1px solid var(--border-subtle);
+      background: rgba(9, 12, 16, 0.8);
+      backdrop-filter: blur(12px);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .nav-container {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 70px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-family: 'Cinzel', serif;
+      font-size: 1.3rem;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      color: var(--gold-light);
+    }
+
+    .brand-mark {
+      width: 28px;
+      height: 28px;
+      border: 1px solid var(--gold-primary);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      color: var(--gold-primary);
+      background: rgba(212, 175, 55, 0.08);
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 28px;
+      font-size: 0.95rem;
+    }
+
+    .nav-links a {
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
+    .nav-links a:hover {
+      color: var(--text-main);
+    }
+
+    .btn-github {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 16px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
+      color: var(--text-main);
+      font-size: 0.9rem;
+      font-weight: 500;
+      transition: all 0.2s ease;
+    }
+
+    .btn-github:hover {
+      background: var(--bg-card-hover);
+      border-color: var(--text-muted);
+      color: #fff;
+    }
+
+    /* Hero Section */
+    .hero {
+      padding: 80px 0 60px;
+      text-align: center;
+    }
+
+    .badge-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 14px;
+      border-radius: 999px;
+      background: rgba(212, 175, 55, 0.08);
+      border: 1px solid var(--border-gold);
+      color: var(--gold-light);
+      font-size: 0.85rem;
+      font-weight: 500;
+      letter-spacing: 0.5px;
+      margin-bottom: 24px;
+    }
+
+    .hero-title {
+      font-family: 'Cinzel', serif;
+      font-size: 3.2rem;
+      font-weight: 900;
+      line-height: 1.15;
+      letter-spacing: 0.5px;
+      color: #ffffff;
+      margin-bottom: 20px;
+      background: linear-gradient(180deg, #ffffff 40%, var(--gold-light) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .hero-subtitle {
+      max-width: 720px;
+      margin: 0 auto 36px;
+      font-size: 1.2rem;
+      color: var(--text-muted);
+      font-weight: 300;
+      line-height: 1.6;
+    }
+
+    /* Install bar */
+    .install-box {
+      max-width: 580px;
+      margin: 0 auto 48px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 10px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+    }
+
+    .install-command {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 0.95rem;
+      color: var(--gold-light);
+      overflow-x: auto;
+      white-space: nowrap;
+    }
+
+    .install-prompt {
+      color: var(--text-dim);
+      user-select: none;
+    }
+
+    .copy-btn {
+      background: transparent;
+      border: 1px solid var(--border-subtle);
+      color: var(--text-muted);
+      padding: 6px 12px;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      font-size: 0.8rem;
+      font-weight: 500;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s ease;
+    }
+
+    .copy-btn:hover {
+      background: var(--bg-card-hover);
+      color: var(--text-main);
+      border-color: var(--text-muted);
+    }
+
+    /* Demo Media Container */
+    .demo-window {
+      max-width: 980px;
+      margin: 0 auto 80px;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+    }
+
+    .window-header {
+      background: #161b22;
+      border-bottom: 1px solid var(--border-subtle);
+      padding: 12px 18px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .window-dot {
+      width: 11px;
+      height: 11px;
+      border-radius: 50%;
+    }
+
+    .dot-red { background: #ff5f56; }
+    .dot-yellow { background: #ffbd2e; }
+    .dot-green { background: #27c93f; }
+
+    .window-title {
+      margin-left: 8px;
+      font-size: 0.8rem;
+      color: var(--text-dim);
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .demo-window img {
+      width: 100%;
+      display: block;
+    }
+
+    /* Interactive Registers Section */
+    .section-title {
+      font-family: 'Cinzel', serif;
+      font-size: 2.2rem;
+      text-align: center;
+      color: #fff;
+      margin-bottom: 12px;
+    }
+
+    .section-subtitle {
+      text-align: center;
+      color: var(--text-muted);
+      max-width: 600px;
+      margin: 0 auto 40px;
+      font-size: 1.05rem;
+    }
+
+    .registers-box {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      margin-bottom: 90px;
+    }
+
+    .register-tabs {
+      display: flex;
+      background: var(--bg-card);
+      border-bottom: 1px solid var(--border-subtle);
+      overflow-x: auto;
+    }
+
+    .tab-btn {
+      flex: 1;
+      padding: 16px 20px;
+      background: transparent;
+      border: none;
+      border-bottom: 2px solid transparent;
+      color: var(--text-muted);
+      font-family: 'Inter', sans-serif;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: all 0.2s ease;
+      white-space: nowrap;
+    }
+
+    .tab-btn:hover {
+      color: var(--text-main);
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    .tab-btn.active {
+      color: var(--gold-light);
+      border-bottom-color: var(--gold-primary);
+      background: rgba(212, 175, 55, 0.04);
+    }
+
+    .tab-content {
+      padding: 36px;
+    }
+
+    .comparison-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+    }
+
+    .box-before, .box-after {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 24px;
+    }
+
+    .box-header {
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .tag-before { color: var(--text-dim); }
+    .tag-after { color: var(--gold-primary); }
+
+    .box-text {
+      font-size: 1.05rem;
+      line-height: 1.6;
+    }
+
+    .box-after .box-text {
+      color: var(--gold-light);
+      font-family: 'Cinzel', serif;
+      font-weight: 500;
+      letter-spacing: 0.3px;
+    }
+
+    /* Features Grid */
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+      margin-bottom: 90px;
+    }
+
+    .feature-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 28px;
+      transition: transform 0.2s ease, border-color 0.2s ease;
+    }
+
+    .feature-card:hover {
+      transform: translateY(-2px);
+      border-color: var(--border-gold);
+    }
+
+    .feature-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: var(--radius-sm);
+      background: rgba(212, 175, 55, 0.08);
+      border: 1px solid var(--border-gold);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 18px;
+      color: var(--gold-primary);
+    }
+
+    .feature-title {
+      font-size: 1.15rem;
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: #fff;
+    }
+
+    .feature-desc {
+      color: var(--text-muted);
+      font-size: 0.92rem;
+      line-height: 1.6;
+    }
+
+    /* Interactive Playground / Live preview */
+    .playground-box {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: 32px;
+      margin-bottom: 90px;
+    }
+
+    .playground-inputs {
+      display: grid;
+      grid-template-columns: 2fr 1fr 1fr auto;
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+
+    .input-field, .select-field {
+      width: 100%;
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
+      padding: 12px 16px;
+      color: var(--text-main);
+      font-family: inherit;
+      font-size: 0.95rem;
+      outline: none;
+      transition: border-color 0.2s ease;
+    }
+
+    .input-field:focus, .select-field:focus {
+      border-color: var(--gold-primary);
+    }
+
+    .btn-transmute {
+      background: var(--gold-primary);
+      color: #000;
+      border: none;
+      border-radius: var(--radius-sm);
+      padding: 0 24px;
+      font-weight: 700;
+      font-size: 0.95rem;
+      cursor: pointer;
+      transition: background 0.2s ease;
+      white-space: nowrap;
+    }
+
+    .btn-transmute:hover {
+      background: var(--gold-hover);
+    }
+
+    .playground-output {
+      background: var(--bg-card);
+      border: 1px solid var(--border-gold);
+      border-radius: var(--radius-md);
+      padding: 24px;
+      min-height: 90px;
+      font-family: 'Cinzel', serif;
+      font-size: 1.1rem;
+      color: var(--gold-light);
+      display: flex;
+      align-items: center;
+      line-height: 1.6;
+    }
+
+    /* Footer */
+    footer {
+      border-top: 1px solid var(--border-subtle);
+      padding: 50px 0;
+      color: var(--text-dim);
+      font-size: 0.9rem;
+      text-align: center;
+    }
+
+    .footer-links {
+      display: flex;
+      justify-content: center;
+      gap: 24px;
+      margin-bottom: 16px;
+    }
+
+    .footer-links a {
+      color: var(--text-muted);
+    }
+
+    .footer-links a:hover {
+      color: var(--text-main);
+    }
+
+    /* Responsive */
+    @media (max-width: 860px) {
+      .hero-title { font-size: 2.3rem; }
+      .comparison-grid { grid-template-columns: 1fr; }
+      .features-grid { grid-template-columns: 1fr; }
+      .playground-inputs { grid-template-columns: 1fr; }
+      .nav-links { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Navigation -->
+  <header>
+    <div class="container nav-container">
+      <div class="brand">
+        <div class="brand-mark">T</div>
+        <span>TOLKIENIZER</span>
+      </div>
+      <nav class="nav-links">
+        <a href="#registers">Registers</a>
+        <a href="#features">Features</a>
+        <a href="#playground">Try Live</a>
+        <a href="#install">Install</a>
+        <a href="https://github.com/nnevskij/tolkienizer" class="btn-github" target="_blank" rel="noopener">
+          <svg height="16" width="16" viewBox="0 0 16 16" fill="currentColor">
+            <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/>
+          </svg>
+          GitHub
+        </a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Hero -->
+  <section class="hero">
+    <div class="container">
+      <div class="badge-pill">Native C99 • Free & Open Source • Vibe-Coded</div>
+      <h1 class="hero-title">Transmute Ordinary Words<br>into Middle-earth Prose</h1>
+      <p class="hero-subtitle">
+        A lightweight native CLI that transforms everyday logs, git commits, and messages into the majestic, epic high-fantasy prose of J.R.R. Tolkien.
+      </p>
+
+      <!-- Install box -->
+      <div class="install-box">
+        <div class="install-command">
+          <span class="install-prompt">$</span>
+          <code id="cmd-install">brew install nnevskij/tap/tolkienizer</code>
+        </div>
+        <button class="copy-btn" onclick="copyInstallCmd()">
+          <span id="copy-label">Copy</span>
+        </button>
+      </div>
+
+      <!-- Demo Video/GIF window -->
+      <div class="demo-window">
+        <div class="window-header">
+          <div class="window-dot dot-red"></div>
+          <div class="window-dot dot-yellow"></div>
+          <div class="window-dot dot-green"></div>
+          <div class="window-title">tolkienizer — terminal session</div>
+        </div>
+        <img src="assets/demo.gif" alt="Tolkienizer terminal session demonstration">
+      </div>
+    </div>
+  </section>
+
+  <!-- Four Registers Comparison -->
+  <section id="registers" class="container">
+    <h2 class="section-title">The Four Narrative Registers</h2>
+    <p class="section-subtitle">Choose the voice of Middle-earth that matches your moment.</p>
+
+    <div class="registers-box">
+      <div class="register-tabs">
+        <button class="tab-btn active" onclick="switchRegister('epic')">Epic (Default)</button>
+        <button class="tab-btn" onclick="switchRegister('hobbit')">The Shire</button>
+        <button class="tab-btn" onclick="switchRegister('elvish')">Elven Havens</button>
+        <button class="tab-btn" onclick="switchRegister('mordor')">Dark Tower</button>
+      </div>
+      <div class="tab-content">
+        <div class="comparison-grid">
+          <div class="box-before">
+            <div class="box-header">
+              <span class="tag-before">Input Text (Everyday modern)</span>
+            </div>
+            <div class="box-text" id="reg-before">
+              "The database server crashed due to memory exhaustion"
+            </div>
+          </div>
+          <div class="box-after">
+            <div class="box-header">
+              <span class="tag-after" id="reg-style-tag">Epic Prose</span>
+              <span style="font-size: 0.8rem; color: var(--text-dim);">-s epic</span>
+            </div>
+            <div class="box-text" id="reg-after">
+              "The great engine of the data-vault hath fallen into darkness, brought low by the relentless tide of exhaustion."
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Interactive Live Playground (Offline Mock Preview) -->
+  <section id="playground" class="container">
+    <h2 class="section-title">Interactive Transmutation</h2>
+    <p class="section-subtitle">Experience how tolkienizer reshapes colloquial thoughts into legend.</p>
+
+    <div class="playground-box">
+      <div class="playground-inputs">
+        <input type="text" id="play-input" class="input-field" value="I forgot to send the meeting notes before lunch" placeholder="Type any modern sentence...">
+        <select id="play-style" class="select-field">
+          <option value="epic">Epic Style</option>
+          <option value="hobbit" selected>Shire / Hobbit</option>
+          <option value="elvish">Elven Havens</option>
+          <option value="mordor">Shadow of Mordor</option>
+        </select>
+        <select id="play-lang" class="select-field">
+          <option value="en">English</option>
+          <option value="it">Italiano</option>
+        </select>
+        <button class="btn-transmute" onclick="runPlayground()">Transmute</button>
+      </div>
+
+      <div class="playground-output" id="play-output">
+        "Before the bell of noon had rung, my mind was troubled, for the scribed words of our council had slipped like morning mist from my remembrance."
+      </div>
+    </div>
+  </section>
+
+  <!-- Features Grid -->
+  <section id="features" class="container">
+    <h2 class="section-title">Engineered with Purpose</h2>
+    <p class="section-subtitle">Native C speed meets authentic high-fantasy lore.</p>
+
+    <div class="features-grid">
+      <div class="feature-card">
+        <div class="feature-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
+          </svg>
+        </div>
+        <h3 class="feature-title">Pure Native C99</h3>
+        <p class="feature-desc">
+          No heavy runtimes, no 500MB node_modules, no python virtual environments. Links only against libcurl and cJSON. Instant startup.
+        </p>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/>
+            <path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+          </svg>
+        </div>
+        <h3 class="feature-title">Multi-Language Native</h3>
+        <p class="feature-desc">
+          English by default, with specialized literary pre-prompts for Italian (Alliata/Fatica register), Spanish, French, German, or auto-detect.
+        </p>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="2" y="2" width="20" height="8" rx="2" ry="2"/>
+            <rect x="2" y="14" width="20" height="8" rx="2" ry="2"/>
+            <line x1="6" y1="6" x2="6.01" y2="6"/>
+            <line x1="6" y1="18" x2="6.01" y2="18"/>
+          </svg>
+        </div>
+        <h3 class="feature-title">Local & Offline via Ollama</h3>
+        <p class="feature-desc">
+          Works 100% locally and offline with Ollama (e.g. llama3). Zero external API requests, zero subscriptions, complete privacy.
+        </p>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+          </svg>
+        </div>
+        <h3 class="feature-title">Zero Hardcoded Keys</h3>
+        <p class="feature-desc">
+          Includes an interactive terminal wizard (<code>tolkienizer --config</code>). Configurations are saved with strict POSIX 0600 file permissions.
+        </p>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="4 17 10 11 4 5"/>
+            <line x1="12" y1="19" x2="20" y2="19"/>
+          </svg>
+        </div>
+        <h3 class="feature-title">UNIX Pipeline Ready</h3>
+        <p class="feature-desc">
+          Accepts text via standard input, files (-f), or arguments. Pipe git diffs, commit logs, or server alerts directly into Tolkien prose.
+        </p>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M20 7h-7m7 5h-7m7 5h-7M4 7h.01M4 12h.01M4 17h.01"/>
+          </svg>
+        </div>
+        <h3 class="feature-title">Homebrew Packaging</h3>
+        <p class="feature-desc">
+          Installable and upgradeable with standard Homebrew commands on macOS and Linux with automatic dependency resolution.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Install Section -->
+  <section id="install" class="container" style="margin-bottom: 90px;">
+    <h2 class="section-title">Get Started in Seconds</h2>
+    <p class="section-subtitle">Install tolkienizer via your preferred package manager or build from source.</p>
+
+    <div class="registers-box" style="padding: 32px;">
+      <h4 style="margin-bottom: 16px; color: var(--gold-light); font-family: 'Cinzel', serif;">Homebrew (macOS & Linux)</h4>
+      <pre style="background: var(--bg-card); padding: 16px; border-radius: 6px; margin-bottom: 24px; color: var(--text-main); border: 1px solid var(--border-subtle);"><code>brew tap nnevskij/tap
+brew install tolkienizer</code></pre>
+
+      <h4 style="margin-bottom: 16px; color: var(--gold-light); font-family: 'Cinzel', serif;">From Source (Any UNIX)</h4>
+      <pre style="background: var(--bg-card); padding: 16px; border-radius: 6px; color: var(--text-main); border: 1px solid var(--border-subtle);"><code>git clone https://github.com/nnevskij/tolkienizer.git
+cd tolkienizer
+make && make install</code></pre>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer>
+    <div class="container">
+      <div class="footer-links">
+        <a href="https://github.com/nnevskij/tolkienizer" target="_blank" rel="noopener">GitHub</a>
+        <a href="https://github.com/nnevskij/homebrew-tap" target="_blank" rel="noopener">Homebrew Tap</a>
+        <a href="https://github.com/nnevskij/tolkienizer/blob/main/LICENSE" target="_blank" rel="noopener">MIT License</a>
+      </div>
+      <p style="margin-bottom: 8px;">
+        Tolkienizer is an open-source project created via vibe-coding with love for high-fantasy literature.
+      </p>
+      <p style="color: var(--text-dim); font-size: 0.8rem;">
+        Not affiliated with the Tolkien Estate. J.R.R. Tolkien's works are copyrighted by their respective holders.
+      </p>
+    </div>
+  </footer>
+
+  <script>
+    function copyInstallCmd() {
+      const text = document.getElementById('cmd-install').innerText;
+      navigator.clipboard.writeText(text).then(() => {
+        const label = document.getElementById('copy-label');
+        label.innerText = 'Copied!';
+        setTimeout(() => { label.innerText = 'Copy'; }, 2000);
+      });
+    }
+
+    const registers = {
+      epic: {
+        tag: 'Epic High Fantasy',
+        before: '"The database server crashed due to memory exhaustion"',
+        after: '"The great engine of the data-vault hath fallen into darkness, brought low by the relentless tide of exhaustion."'
+      },
+      hobbit: {
+        tag: 'The Shire / Halfling Voice',
+        before: '"I have to go buy tea and butter at the grocery store"',
+        after: '"I must take a jaunt to the market for fine tea and butter, as a respectable halfling\'s pantry should never be caught in want."'
+      },
+      elvish: {
+        tag: 'Elven Havens / Starlight of Eldar',
+        before: '"The security audit completed with zero vulnerabilities"',
+        after: '"May the starlight of Elbereth guide our journey, for ancient memories fade not and peace rests upon the woodland realm."'
+      },
+      mordor: {
+        tag: 'Dark Tower / Iron Decree',
+        before: '"Deploy the release before Friday or face consequences"',
+        after: '"The release must be unleashed upon the world ere Friday\'s twilight, lest the shadows claim your delay."'
+      }
+    };
+
+    function switchRegister(style) {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      event.target.classList.add('active');
+
+      const data = registers[style];
+      document.getElementById('reg-style-tag').innerText = data.tag;
+      document.getElementById('reg-before').innerText = data.before;
+      document.getElementById('reg-after').innerText = data.after;
+    }
+
+    const mockDictionary = {
+      epic: {
+        en: "The solemn scrolls of our assembly were scattered like dry leaves before the gale, yet destiny hath preserved our intent.",
+        it: "Le solenni pergamene della nostra assemblea furono disperse come foglie secche dinanzi alla tempesta, eppure il fato ne conserva la memoria."
+      },
+      hobbit: {
+        en: "Before the bell of noon had rung, my mind was troubled, for the scribed words of our council had slipped like morning mist from my remembrance.",
+        it: "Prima che battesse l'ora del mezzodì, il mio cuore era turbato, poiché le note del consiglio erano svanite dalla memoria come nebbia sul fiume."
+      },
+      elvish: {
+        en: "In the quiet hours ere the sun reached its zenith, the spoken tidings drifted beyond our grasp, yet the song of the stars remembers all.",
+        it: "Nelle ore quiete prima che il sole toccasse lo zenit, le parole del consiglio scivolarono via, eppure la memoria immacolata delle stelle le custodisce."
+      },
+      mordor: {
+        en: "The decree of the council was delayed ere the noon-hour; beware, for the Shadow brooked no idle forgetfulness.",
+        it: "Il decreto dell'assemblea ha subito indugio prima del mezzogiorno; badate bene a voi, poiché l'Ombra non perdona simile dimenticanza."
+      }
+    };
+
+    function runPlayground() {
+      const input = document.getElementById('play-input').value.trim();
+      const style = document.getElementById('play-style').value;
+      const lang = document.getElementById('play-lang').value;
+      const output = document.getElementById('play-output');
+
+      if (!input) {
+        output.innerText = '"Silence fell upon the halls, for no word was spoken."';
+        return;
+      }
+
+      output.innerText = 'Consulting the Lore of Middle-earth...';
+
+      setTimeout(() => {
+        const text = mockDictionary[style][lang] || mockDictionary.epic.en;
+        output.innerText = `"${text}"`;
+      }, 400);
+    }
+  </script>
+</body>
+</html>
