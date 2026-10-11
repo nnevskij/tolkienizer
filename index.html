@@ -3,64 +3,91 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Tolkienizer - Transmute Ordinary Words into Middle-earth Prose</title>
-  <meta name="description" content="A high-performance command-line tool in pure C99 that transforms everyday text into the high-fantasy prose of J.R.R. Tolkien using AI.">
+  <title>Tolkienizer — Transmute Words into Mythic Prose</title>
+  <meta name="description" content="A high-performance CLI tool that transforms everyday text into the majestic prose of J.R.R. Tolkien. Written in C99, powered by AI.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
-  
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Cinzel+Decorative:wght@400;700;900&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Crimson+Pro:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+
   <style>
+    /* ═══════════════════════════════════════════════
+       CSS CUSTOM PROPERTIES
+       ═══════════════════════════════════════════════ */
     :root {
-      --bg-base: #090c10;
-      --bg-surface: #0d1117;
-      --bg-card: #161b22;
-      --bg-card-hover: #1c2128;
-      --border-subtle: #21262d;
+      --bg-abyss: #060a0f;
+      --bg-base: #0a0e15;
+      --bg-surface: #0f1520;
+      --bg-card: #141c28;
+      --bg-card-hover: #1a2435;
+      --border-subtle: rgba(212, 175, 55, 0.12);
       --border-gold: rgba(212, 175, 55, 0.3);
+      --border-glow: rgba(212, 175, 55, 0.5);
       --gold-primary: #d4af37;
       --gold-light: #f3e5ab;
       --gold-hover: #e5c07b;
-      --text-main: #f0f6fc;
-      --text-muted: #8b949e;
-      --text-dim: #6e7681;
-      --accent-cyan: #38bdf8;
-      --accent-green: #3fb950;
-      --accent-purple: #a855f7;
-      --accent-red: #f87171;
+      --gold-dim: #b8962e;
+      --text-main: #e8e0d0;
+      --text-muted: #8a8070;
+      --text-dim: #605848;
+      --accent-emerald: #2dd4a0;
+      --accent-sapphire: #6898e8;
+      --accent-flame: #e8653a;
+      --accent-starlight: #c8b8ff;
       --radius-sm: 6px;
-      --radius-md: 10px;
-      --radius-lg: 16px;
+      --radius-md: 12px;
+      --radius-lg: 18px;
+      --radius-xl: 24px;
+      --shadow-gold: 0 0 30px rgba(212, 175, 55, 0.15);
+      --shadow-deep: 0 20px 60px rgba(0, 0, 0, 0.5);
+      --font-display: 'Cinzel Decorative', 'Cinzel', serif;
+      --font-heading: 'Cinzel', serif;
+      --font-body: 'Crimson Pro', 'Inter', serif;
+      --font-mono: 'JetBrains Mono', monospace;
+      --font-ui: 'Inter', -apple-system, sans-serif;
     }
 
-    * {
+    /* ═══════════════════════════════════════════════
+       RESET & BASE
+       ═══════════════════════════════════════════════ */
+    *, *::before, *::after {
       box-sizing: border-box;
       margin: 0;
       padding: 0;
     }
 
+    html {
+      scroll-behavior: smooth;
+      scroll-padding-top: 80px;
+    }
+
     body {
-      background-color: var(--bg-base);
+      background-color: var(--bg-abyss);
       color: var(--text-main);
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-      line-height: 1.6;
+      font-family: var(--font-body);
+      font-size: 1.05rem;
+      line-height: 1.7;
       overflow-x: hidden;
-      background-image: 
-        radial-gradient(ellipse at 50% -20%, rgba(212, 175, 55, 0.08), transparent 60%),
-        radial-gradient(circle at 100% 50%, rgba(56, 189, 248, 0.03), transparent 40%);
+      min-height: 100vh;
     }
 
     a {
       color: var(--gold-primary);
       text-decoration: none;
-      transition: color 0.2s ease;
+      transition: color 0.3s ease, text-shadow 0.3s ease;
     }
 
     a:hover {
-      color: var(--gold-hover);
+      color: var(--gold-light);
+      text-shadow: 0 0 8px rgba(212, 175, 55, 0.4);
     }
 
     code, pre {
-      font-family: 'JetBrains Mono', monospace;
+      font-family: var(--font-mono);
+    }
+
+    ::selection {
+      background: rgba(212, 175, 55, 0.25);
+      color: var(--gold-light);
     }
 
     .container {
@@ -69,146 +96,411 @@
       padding: 0 24px;
     }
 
-    /* Navigation */
-    header {
-      border-bottom: 1px solid var(--border-subtle);
-      background: rgba(9, 12, 16, 0.8);
-      backdrop-filter: blur(12px);
-      position: sticky;
+    /* ═══════════════════════════════════════════════
+       ANIMATED BACKGROUND — STARFIELD + PARTICLES
+       ═══════════════════════════════════════════════ */
+    #particles-canvas {
+      position: fixed;
       top: 0;
-      z-index: 100;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    .bg-atmosphere {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+      pointer-events: none;
+      background:
+        radial-gradient(ellipse at 50% 0%, rgba(212, 175, 55, 0.06) 0%, transparent 55%),
+        radial-gradient(ellipse at 80% 30%, rgba(104, 152, 232, 0.04) 0%, transparent 40%),
+        radial-gradient(ellipse at 20% 70%, rgba(200, 184, 255, 0.03) 0%, transparent 35%),
+        radial-gradient(ellipse at 50% 100%, rgba(232, 101, 58, 0.04) 0%, transparent 40%);
+    }
+
+    /* ═══════════════════════════════════════════════
+       SCROLL ANIMATIONS
+       ═══════════════════════════════════════════════ */
+    .animate-on-scroll {
+      opacity: 0;
+      transform: translateY(40px);
+      transition: opacity 0.8s cubic-bezier(0.22, 1, 0.36, 1),
+                  transform 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    .animate-on-scroll.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .animate-on-scroll.delay-1 { transition-delay: 0.1s; }
+    .animate-on-scroll.delay-2 { transition-delay: 0.2s; }
+    .animate-on-scroll.delay-3 { transition-delay: 0.3s; }
+    .animate-on-scroll.delay-4 { transition-delay: 0.4s; }
+    .animate-on-scroll.delay-5 { transition-delay: 0.5s; }
+    .animate-on-scroll.delay-6 { transition-delay: 0.6s; }
+    .animate-on-scroll.delay-7 { transition-delay: 0.7s; }
+    .animate-on-scroll.delay-8 { transition-delay: 0.8s; }
+
+    .animate-slide-left {
+      opacity: 0;
+      transform: translateX(-50px);
+      transition: opacity 0.8s cubic-bezier(0.22, 1, 0.36, 1),
+                  transform 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    .animate-slide-right {
+      opacity: 0;
+      transform: translateX(50px);
+      transition: opacity 0.8s cubic-bezier(0.22, 1, 0.36, 1),
+                  transform 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    .animate-slide-left.visible,
+    .animate-slide-right.visible {
+      opacity: 1;
+      transform: translateX(0);
+    }
+
+    .animate-scale {
+      opacity: 0;
+      transform: scale(0.9);
+      transition: opacity 0.8s ease, transform 0.8s ease;
+    }
+
+    .animate-scale.visible {
+      opacity: 1;
+      transform: scale(1);
+    }
+
+    /* ═══════════════════════════════════════════════
+       DECORATIVE ELEMENTS — RUNE DIVIDERS
+       ═══════════════════════════════════════════════ */
+    .rune-divider {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      margin: 60px auto;
+      max-width: 400px;
+      opacity: 0.5;
+    }
+
+    .rune-divider::before,
+    .rune-divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--gold-primary), transparent);
+    }
+
+    .rune-symbol {
+      font-family: var(--font-display);
+      font-size: 1.2rem;
+      color: var(--gold-primary);
+      text-shadow: 0 0 12px rgba(212, 175, 55, 0.5);
+      animation: runeGlow 3s ease-in-out infinite alternate;
+    }
+
+    @keyframes runeGlow {
+      0% { text-shadow: 0 0 8px rgba(212, 175, 55, 0.3); opacity: 0.6; }
+      100% { text-shadow: 0 0 20px rgba(212, 175, 55, 0.7); opacity: 1; }
+    }
+
+    /* ═══════════════════════════════════════════════
+       NAVIGATION
+       ═══════════════════════════════════════════════ */
+    header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 1000;
+      border-bottom: 1px solid var(--border-subtle);
+      background: rgba(6, 10, 15, 0.85);
+      backdrop-filter: blur(20px) saturate(180%);
+      -webkit-backdrop-filter: blur(20px) saturate(180%);
+      transition: background 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    header.scrolled {
+      background: rgba(6, 10, 15, 0.95);
+      box-shadow: 0 4px 30px rgba(0, 0, 0, 0.4), 0 0 1px rgba(212, 175, 55, 0.2);
     }
 
     .nav-container {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      height: 70px;
+      height: 72px;
     }
 
     .brand {
       display: flex;
       align-items: center;
-      gap: 12px;
-      font-family: 'Cinzel', serif;
-      font-size: 1.3rem;
+      gap: 14px;
+      font-family: var(--font-display);
+      font-size: 1.15rem;
       font-weight: 700;
-      letter-spacing: 1.5px;
+      letter-spacing: 2px;
       color: var(--gold-light);
+      text-shadow: 0 0 20px rgba(212, 175, 55, 0.3);
     }
 
-    .brand-mark {
-      width: 28px;
-      height: 28px;
-      border: 1px solid var(--gold-primary);
+    .brand-ring {
+      width: 38px;
+      height: 38px;
+      border: 2px solid var(--gold-primary);
       border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 14px;
-      color: var(--gold-primary);
-      background: rgba(212, 175, 55, 0.08);
+      font-size: 16px;
+      font-weight: 900;
+      color: var(--gold-light);
+      background: radial-gradient(circle, rgba(212, 175, 55, 0.15) 0%, transparent 70%);
+      box-shadow: 0 0 15px rgba(212, 175, 55, 0.3), inset 0 0 10px rgba(212, 175, 55, 0.1);
+      animation: ringPulse 4s ease-in-out infinite;
+      position: relative;
+    }
+
+    @keyframes ringPulse {
+      0%, 100% {
+        box-shadow: 0 0 15px rgba(212, 175, 55, 0.3), inset 0 0 10px rgba(212, 175, 55, 0.1);
+        transform: rotate(0deg);
+      }
+      50% {
+        box-shadow: 0 0 25px rgba(212, 175, 55, 0.5), inset 0 0 15px rgba(212, 175, 55, 0.2);
+        transform: rotate(10deg);
+      }
     }
 
     .nav-links {
       display: flex;
       align-items: center;
-      gap: 28px;
-      font-size: 0.95rem;
+      gap: 32px;
+      font-family: var(--font-ui);
+      font-size: 0.9rem;
     }
 
     .nav-links a {
       color: var(--text-muted);
       font-weight: 500;
+      letter-spacing: 0.5px;
+      position: relative;
+      padding-bottom: 4px;
+    }
+
+    .nav-links a::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 50%;
+      width: 0;
+      height: 1px;
+      background: var(--gold-primary);
+      transition: all 0.3s ease;
+      transform: translateX(-50%);
+      box-shadow: 0 0 6px rgba(212, 175, 55, 0.4);
     }
 
     .nav-links a:hover {
-      color: var(--text-main);
+      color: var(--gold-light);
+    }
+
+    .nav-links a:hover::after {
+      width: 100%;
     }
 
     .btn-github {
       display: inline-flex;
       align-items: center;
       gap: 8px;
-      padding: 8px 16px;
-      background: var(--bg-card);
-      border: 1px solid var(--border-subtle);
+      padding: 9px 18px;
+      background: rgba(212, 175, 55, 0.08);
+      border: 1px solid var(--border-gold);
       border-radius: var(--radius-sm);
-      color: var(--text-main);
-      font-size: 0.9rem;
-      font-weight: 500;
-      transition: all 0.2s ease;
+      color: var(--gold-light);
+      font-size: 0.88rem;
+      font-weight: 600;
+      transition: all 0.3s ease;
     }
 
     .btn-github:hover {
-      background: var(--bg-card-hover);
-      border-color: var(--text-muted);
+      background: rgba(212, 175, 55, 0.15);
+      border-color: var(--gold-primary);
+      box-shadow: 0 0 20px rgba(212, 175, 55, 0.2);
       color: #fff;
+      text-shadow: none;
     }
 
-    /* Hero Section */
+    /* Mobile menu button */
+    .mobile-menu-btn {
+      display: none;
+      background: none;
+      border: 1px solid var(--border-gold);
+      color: var(--gold-primary);
+      padding: 8px;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      font-size: 1.2rem;
+      line-height: 1;
+    }
+
+    /* ═══════════════════════════════════════════════
+       HERO SECTION
+       ═══════════════════════════════════════════════ */
     .hero {
-      padding: 80px 0 60px;
+      position: relative;
+      z-index: 1;
+      padding: 160px 0 100px;
       text-align: center;
+      overflow: hidden;
     }
 
-    .badge-pill {
+    .hero::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 120%;
+      height: 100%;
+      background: radial-gradient(ellipse at center, rgba(212, 175, 55, 0.08) 0%, transparent 60%);
+      pointer-events: none;
+      animation: heroGlow 6s ease-in-out infinite alternate;
+    }
+
+    @keyframes heroGlow {
+      0% { opacity: 0.5; transform: translateX(-50%) scale(1); }
+      100% { opacity: 1; transform: translateX(-50%) scale(1.1); }
+    }
+
+    .hero-badge {
       display: inline-flex;
       align-items: center;
-      gap: 8px;
-      padding: 6px 14px;
+      gap: 10px;
+      padding: 8px 20px;
       border-radius: 999px;
-      background: rgba(212, 175, 55, 0.08);
+      background: rgba(212, 175, 55, 0.06);
       border: 1px solid var(--border-gold);
       color: var(--gold-light);
-      font-size: 0.85rem;
-      font-weight: 500;
-      letter-spacing: 0.5px;
-      margin-bottom: 24px;
+      font-family: var(--font-ui);
+      font-size: 0.82rem;
+      font-weight: 600;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      margin-bottom: 32px;
+      animation: badgeFloat 3s ease-in-out infinite;
+    }
+
+    @keyframes badgeFloat {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-5px); }
+    }
+
+    .hero-badge .badge-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--accent-emerald);
+      box-shadow: 0 0 8px var(--accent-emerald);
+      animation: dotBlink 2s ease-in-out infinite;
+    }
+
+    @keyframes dotBlink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
     }
 
     .hero-title {
-      font-family: 'Cinzel', serif;
-      font-size: 3.2rem;
+      font-family: var(--font-display);
+      font-size: clamp(2.5rem, 6vw, 4.2rem);
       font-weight: 900;
       line-height: 1.15;
-      letter-spacing: 0.5px;
-      color: #ffffff;
-      margin-bottom: 20px;
-      background: linear-gradient(180deg, #ffffff 40%, var(--gold-light) 100%);
+      letter-spacing: 2px;
+      margin-bottom: 24px;
+      background: linear-gradient(180deg, #ffffff 0%, var(--gold-light) 50%, var(--gold-primary) 100%);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
+      background-clip: text;
+      animation: titleShimmer 4s ease-in-out infinite alternate;
+      position: relative;
+      z-index: 1;
+    }
+
+    @keyframes titleShimmer {
+      0% {
+        filter: brightness(1) drop-shadow(0 0 20px rgba(212, 175, 55, 0.2));
+      }
+      100% {
+        filter: brightness(1.15) drop-shadow(0 0 40px rgba(212, 175, 55, 0.4));
+      }
     }
 
     .hero-subtitle {
       max-width: 720px;
-      margin: 0 auto 36px;
-      font-size: 1.2rem;
+      margin: 0 auto 44px;
+      font-size: 1.25rem;
       color: var(--text-muted);
-      font-weight: 300;
-      line-height: 1.6;
+      font-weight: 400;
+      line-height: 1.7;
+      font-family: var(--font-body);
+      font-style: italic;
+      position: relative;
+      z-index: 1;
     }
 
-    /* Install bar */
-    .install-box {
-      max-width: 580px;
-      margin: 0 auto 48px;
+    .hero-subtitle .typed-cursor {
+      display: inline-block;
+      width: 2px;
+      height: 1.2em;
+      background: var(--gold-primary);
+      margin-left: 2px;
+      vertical-align: text-bottom;
+      animation: cursorBlink 1s steps(1) infinite;
+    }
+
+    @keyframes cursorBlink {
+      0%, 50% { opacity: 1; }
+      51%, 100% { opacity: 0; }
+    }
+
+    /* Hero install bar */
+    .install-bar {
+      max-width: 600px;
+      margin: 0 auto 28px;
       background: var(--bg-card);
-      border: 1px solid var(--border-subtle);
+      border: 1px solid var(--border-gold);
       border-radius: var(--radius-md);
-      padding: 10px 16px;
+      padding: 14px 20px;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+      box-shadow: var(--shadow-gold), var(--shadow-deep);
+      position: relative;
+      z-index: 1;
+      transition: border-color 0.3s ease, box-shadow 0.3s ease;
     }
 
-    .install-command {
+    .install-bar:hover {
+      border-color: var(--gold-primary);
+      box-shadow: 0 0 40px rgba(212, 175, 55, 0.2), var(--shadow-deep);
+    }
+
+    .install-cmd {
       display: flex;
       align-items: center;
       gap: 12px;
       font-size: 0.95rem;
       color: var(--gold-light);
+      font-family: var(--font-mono);
       overflow-x: auto;
       white-space: nowrap;
     }
@@ -219,61 +511,141 @@
     }
 
     .copy-btn {
-      background: transparent;
-      border: 1px solid var(--border-subtle);
-      color: var(--text-muted);
-      padding: 6px 12px;
+      background: rgba(212, 175, 55, 0.1);
+      border: 1px solid var(--border-gold);
+      color: var(--gold-primary);
+      padding: 7px 14px;
       border-radius: var(--radius-sm);
       cursor: pointer;
-      font-size: 0.8rem;
-      font-weight: 500;
+      font-size: 0.78rem;
+      font-weight: 600;
+      font-family: var(--font-ui);
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      transition: all 0.2s ease;
+      transition: all 0.3s ease;
+      white-space: nowrap;
     }
 
     .copy-btn:hover {
-      background: var(--bg-card-hover);
-      color: var(--text-main);
-      border-color: var(--text-muted);
+      background: rgba(212, 175, 55, 0.2);
+      color: var(--gold-light);
+      box-shadow: 0 0 12px rgba(212, 175, 55, 0.3);
     }
 
-    /* Demo Media Container */
+    .hero-actions {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .btn-primary {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 14px 32px;
+      background: linear-gradient(135deg, var(--gold-primary), var(--gold-dim));
+      color: #0a0e15;
+      border: none;
+      border-radius: var(--radius-md);
+      font-family: var(--font-heading);
+      font-size: 1rem;
+      font-weight: 700;
+      letter-spacing: 1px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-decoration: none;
+      box-shadow: 0 4px 20px rgba(212, 175, 55, 0.3);
+    }
+
+    .btn-primary:hover {
+      background: linear-gradient(135deg, var(--gold-light), var(--gold-primary));
+      box-shadow: 0 6px 30px rgba(212, 175, 55, 0.5);
+      transform: translateY(-2px);
+      color: #0a0e15;
+      text-shadow: none;
+    }
+
+    .btn-secondary {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 14px 32px;
+      background: transparent;
+      color: var(--gold-light);
+      border: 1px solid var(--border-gold);
+      border-radius: var(--radius-md);
+      font-family: var(--font-heading);
+      font-size: 1rem;
+      font-weight: 600;
+      letter-spacing: 1px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-decoration: none;
+    }
+
+    .btn-secondary:hover {
+      background: rgba(212, 175, 55, 0.08);
+      border-color: var(--gold-primary);
+      box-shadow: 0 0 20px rgba(212, 175, 55, 0.15);
+      text-shadow: none;
+    }
+
+    /* ═══════════════════════════════════════════════
+       DEMO TERMINAL WINDOW
+       ═══════════════════════════════════════════════ */
+    .demo-section {
+      position: relative;
+      z-index: 1;
+      padding-bottom: 40px;
+    }
+
     .demo-window {
       max-width: 980px;
-      margin: 0 auto 80px;
+      margin: 0 auto;
       background: var(--bg-surface);
-      border: 1px solid var(--border-subtle);
+      border: 1px solid var(--border-gold);
       border-radius: var(--radius-lg);
       overflow: hidden;
-      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+      box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6), 0 0 40px rgba(212, 175, 55, 0.08);
+      transition: box-shadow 0.5s ease;
+    }
+
+    .demo-window:hover {
+      box-shadow: 0 30px 80px rgba(0, 0, 0, 0.7), 0 0 60px rgba(212, 175, 55, 0.15);
     }
 
     .window-header {
-      background: #161b22;
+      background: linear-gradient(90deg, #161b22, #1a2030);
       border-bottom: 1px solid var(--border-subtle);
-      padding: 12px 18px;
+      padding: 14px 20px;
       display: flex;
       align-items: center;
       gap: 8px;
     }
 
     .window-dot {
-      width: 11px;
-      height: 11px;
+      width: 12px;
+      height: 12px;
       border-radius: 50%;
+      transition: transform 0.2s ease;
     }
 
-    .dot-red { background: #ff5f56; }
-    .dot-yellow { background: #ffbd2e; }
-    .dot-green { background: #27c93f; }
+    .window-dot:hover { transform: scale(1.3); }
+
+    .dot-red { background: #ff5f56; box-shadow: 0 0 6px rgba(255, 95, 86, 0.4); }
+    .dot-yellow { background: #ffbd2e; box-shadow: 0 0 6px rgba(255, 189, 46, 0.4); }
+    .dot-green { background: #27c93f; box-shadow: 0 0 6px rgba(39, 201, 63, 0.4); }
 
     .window-title {
-      margin-left: 8px;
-      font-size: 0.8rem;
+      margin-left: 10px;
+      font-size: 0.78rem;
       color: var(--text-dim);
-      font-family: 'JetBrains Mono', monospace;
+      font-family: var(--font-mono);
+      letter-spacing: 0.5px;
     }
 
     .demo-window img {
@@ -281,29 +653,83 @@
       display: block;
     }
 
-    /* Interactive Registers Section */
-    .section-title {
-      font-family: 'Cinzel', serif;
-      font-size: 2.2rem;
+    /* ═══════════════════════════════════════════════
+       SECTION STYLING
+       ═══════════════════════════════════════════════ */
+    .section {
+      position: relative;
+      z-index: 1;
+      padding: 80px 0;
+    }
+
+    .section-header {
       text-align: center;
+      margin-bottom: 56px;
+    }
+
+    .section-tag {
+      display: inline-block;
+      font-family: var(--font-ui);
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: var(--gold-primary);
+      margin-bottom: 16px;
+      position: relative;
+      padding: 0 20px;
+    }
+
+    .section-tag::before,
+    .section-tag::after {
+      content: '✦';
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 0.5rem;
+      opacity: 0.5;
+    }
+
+    .section-tag::before { left: 0; }
+    .section-tag::after { right: 0; }
+
+    .section-title {
+      font-family: var(--font-heading);
+      font-size: clamp(1.8rem, 4vw, 2.6rem);
       color: #fff;
-      margin-bottom: 12px;
+      margin-bottom: 16px;
+      line-height: 1.2;
     }
 
     .section-subtitle {
-      text-align: center;
       color: var(--text-muted);
       max-width: 600px;
-      margin: 0 auto 40px;
-      font-size: 1.05rem;
+      margin: 0 auto;
+      font-size: 1.1rem;
+      font-style: italic;
     }
 
+    /* ═══════════════════════════════════════════════
+       INTERACTIVE REGISTER SHOWCASE
+       ═══════════════════════════════════════════════ */
     .registers-box {
       background: var(--bg-surface);
-      border: 1px solid var(--border-subtle);
-      border-radius: var(--radius-lg);
+      border: 1px solid var(--border-gold);
+      border-radius: var(--radius-xl);
       overflow: hidden;
-      margin-bottom: 90px;
+      box-shadow: var(--shadow-gold);
+      position: relative;
+    }
+
+    .registers-box::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent 10%, var(--gold-primary) 50%, transparent 90%);
+      opacity: 0.5;
     }
 
     .register-tabs {
@@ -311,40 +737,65 @@
       background: var(--bg-card);
       border-bottom: 1px solid var(--border-subtle);
       overflow-x: auto;
+      scrollbar-width: none;
     }
+
+    .register-tabs::-webkit-scrollbar { display: none; }
 
     .tab-btn {
       flex: 1;
-      padding: 16px 20px;
+      padding: 18px 24px;
       background: transparent;
       border: none;
       border-bottom: 2px solid transparent;
       color: var(--text-muted);
-      font-family: 'Inter', sans-serif;
+      font-family: var(--font-heading);
       font-size: 0.95rem;
       font-weight: 600;
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 8px;
-      transition: all 0.2s ease;
+      gap: 10px;
+      transition: all 0.35s ease;
       white-space: nowrap;
+      position: relative;
+      letter-spacing: 0.5px;
     }
 
     .tab-btn:hover {
-      color: var(--text-main);
-      background: rgba(255, 255, 255, 0.02);
+      color: var(--gold-light);
+      background: rgba(212, 175, 55, 0.04);
     }
 
     .tab-btn.active {
       color: var(--gold-light);
       border-bottom-color: var(--gold-primary);
-      background: rgba(212, 175, 55, 0.04);
+      background: rgba(212, 175, 55, 0.06);
+      text-shadow: 0 0 12px rgba(212, 175, 55, 0.3);
+    }
+
+    .tab-icon {
+      font-size: 1.15rem;
     }
 
     .tab-content {
-      padding: 36px;
+      padding: 40px;
+    }
+
+    .style-tag {
+      display: inline-block;
+      padding: 4px 14px;
+      border-radius: 999px;
+      background: rgba(212, 175, 55, 0.08);
+      border: 1px solid var(--border-gold);
+      color: var(--gold-primary);
+      font-family: var(--font-ui);
+      font-size: 0.75rem;
+      font-weight: 600;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      margin-bottom: 28px;
     }
 
     .comparison-grid {
@@ -357,96 +808,177 @@
       background: var(--bg-card);
       border: 1px solid var(--border-subtle);
       border-radius: var(--radius-md);
-      padding: 24px;
+      padding: 28px;
+      position: relative;
+      overflow: hidden;
+      transition: border-color 0.3s ease, transform 0.3s ease;
+    }
+
+    .box-before:hover, .box-after:hover {
+      transform: translateY(-2px);
+    }
+
+    .box-after {
+      border-color: var(--border-gold);
+    }
+
+    .box-after::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: radial-gradient(ellipse at top right, rgba(212, 175, 55, 0.05), transparent 60%);
+      pointer-events: none;
     }
 
     .box-header {
-      font-size: 0.75rem;
+      font-family: var(--font-ui);
+      font-size: 0.72rem;
       font-weight: 700;
-      letter-spacing: 1px;
+      letter-spacing: 1.5px;
       text-transform: uppercase;
-      margin-bottom: 14px;
+      margin-bottom: 16px;
       display: flex;
       align-items: center;
-      justify-content: space-between;
+      gap: 8px;
     }
 
     .tag-before { color: var(--text-dim); }
     .tag-after { color: var(--gold-primary); }
 
+    .header-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+    }
+
+    .header-dot.dim { background: var(--text-dim); }
+    .header-dot.gold { background: var(--gold-primary); box-shadow: 0 0 8px rgba(212, 175, 55, 0.5); }
+
     .box-text {
       font-size: 1.05rem;
-      line-height: 1.6;
+      line-height: 1.7;
     }
 
     .box-after .box-text {
       color: var(--gold-light);
-      font-family: 'Cinzel', serif;
+      font-family: var(--font-heading);
       font-weight: 500;
       letter-spacing: 0.3px;
+      font-size: 1.02rem;
     }
 
-    /* Features Grid */
+    /* ═══════════════════════════════════════════════
+       FEATURES GRID — ENCHANTED CARDS
+       ═══════════════════════════════════════════════ */
     .features-grid {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
       gap: 24px;
-      margin-bottom: 90px;
     }
 
     .feature-card {
       background: var(--bg-surface);
       border: 1px solid var(--border-subtle);
-      border-radius: var(--radius-md);
-      padding: 28px;
-      transition: transform 0.2s ease, border-color 0.2s ease;
+      border-radius: var(--radius-lg);
+      padding: 32px;
+      transition: all 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .feature-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: radial-gradient(circle at top left, rgba(212, 175, 55, 0.06), transparent 60%);
+      opacity: 0;
+      transition: opacity 0.4s ease;
+      pointer-events: none;
     }
 
     .feature-card:hover {
-      transform: translateY(-2px);
+      transform: translateY(-6px);
       border-color: var(--border-gold);
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3), 0 0 20px rgba(212, 175, 55, 0.1);
+    }
+
+    .feature-card:hover::before {
+      opacity: 1;
     }
 
     .feature-icon {
-      width: 44px;
-      height: 44px;
-      border-radius: var(--radius-sm);
-      background: rgba(212, 175, 55, 0.08);
+      width: 52px;
+      height: 52px;
+      border-radius: var(--radius-md);
+      background: rgba(212, 175, 55, 0.06);
       border: 1px solid var(--border-gold);
       display: flex;
       align-items: center;
       justify-content: center;
-      margin-bottom: 18px;
+      margin-bottom: 20px;
       color: var(--gold-primary);
+      font-size: 1.5rem;
+      transition: all 0.3s ease;
+    }
+
+    .feature-card:hover .feature-icon {
+      background: rgba(212, 175, 55, 0.12);
+      box-shadow: 0 0 20px rgba(212, 175, 55, 0.2);
+      transform: scale(1.05);
     }
 
     .feature-title {
-      font-size: 1.15rem;
-      font-weight: 600;
-      margin-bottom: 8px;
+      font-family: var(--font-heading);
+      font-size: 1.1rem;
+      font-weight: 700;
+      margin-bottom: 10px;
       color: #fff;
     }
 
     .feature-desc {
       color: var(--text-muted);
-      font-size: 0.92rem;
+      font-size: 0.95rem;
       line-height: 1.6;
+      font-family: var(--font-ui);
     }
 
-    /* Interactive Playground / Live preview */
+    /* ═══════════════════════════════════════════════
+       INTERACTIVE PLAYGROUND
+       ═══════════════════════════════════════════════ */
     .playground-box {
       background: var(--bg-surface);
-      border: 1px solid var(--border-subtle);
-      border-radius: var(--radius-lg);
-      padding: 32px;
-      margin-bottom: 90px;
+      border: 1px solid var(--border-gold);
+      border-radius: var(--radius-xl);
+      padding: 40px;
+      box-shadow: var(--shadow-gold);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .playground-box::after {
+      content: '';
+      position: absolute;
+      bottom: -50%;
+      right: -20%;
+      width: 60%;
+      height: 100%;
+      background: radial-gradient(ellipse, rgba(212, 175, 55, 0.04), transparent 60%);
+      pointer-events: none;
     }
 
     .playground-inputs {
       display: grid;
       grid-template-columns: 2fr 1fr 1fr auto;
       gap: 16px;
-      margin-bottom: 20px;
+      margin-bottom: 24px;
+      position: relative;
+      z-index: 1;
     }
 
     .input-field, .select-field {
@@ -454,92 +986,282 @@
       background: var(--bg-card);
       border: 1px solid var(--border-subtle);
       border-radius: var(--radius-sm);
-      padding: 12px 16px;
+      padding: 14px 18px;
       color: var(--text-main);
-      font-family: inherit;
-      font-size: 0.95rem;
+      font-family: var(--font-body);
+      font-size: 1rem;
       outline: none;
-      transition: border-color 0.2s ease;
+      transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .input-field::placeholder {
+      color: var(--text-dim);
+      font-style: italic;
     }
 
     .input-field:focus, .select-field:focus {
       border-color: var(--gold-primary);
+      box-shadow: 0 0 12px rgba(212, 175, 55, 0.15);
+    }
+
+    .select-field {
+      font-family: var(--font-ui);
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%238a8070' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 14px center;
+      padding-right: 36px;
+    }
+
+    .select-field option {
+      background: var(--bg-card);
+      color: var(--text-main);
     }
 
     .btn-transmute {
-      background: var(--gold-primary);
-      color: #000;
+      background: linear-gradient(135deg, var(--gold-primary), var(--gold-dim));
+      color: #0a0e15;
       border: none;
       border-radius: var(--radius-sm);
-      padding: 0 24px;
+      padding: 0 28px;
+      font-family: var(--font-heading);
       font-weight: 700;
       font-size: 0.95rem;
       cursor: pointer;
-      transition: background 0.2s ease;
+      transition: all 0.3s ease;
       white-space: nowrap;
+      letter-spacing: 0.5px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .btn-transmute::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+      transition: left 0.5s ease;
     }
 
     .btn-transmute:hover {
-      background: var(--gold-hover);
+      background: linear-gradient(135deg, var(--gold-light), var(--gold-primary));
+      box-shadow: 0 4px 20px rgba(212, 175, 55, 0.4);
+      transform: translateY(-1px);
+    }
+
+    .btn-transmute:hover::before {
+      left: 100%;
     }
 
     .playground-output {
       background: var(--bg-card);
       border: 1px solid var(--border-gold);
       border-radius: var(--radius-md);
-      padding: 24px;
-      min-height: 90px;
-      font-family: 'Cinzel', serif;
+      padding: 28px;
+      min-height: 100px;
+      font-family: var(--font-heading);
       font-size: 1.1rem;
       color: var(--gold-light);
       display: flex;
       align-items: center;
-      line-height: 1.6;
+      line-height: 1.7;
+      position: relative;
+      z-index: 1;
+      transition: border-color 0.3s ease;
     }
 
-    /* Footer */
+    .playground-output.active {
+      border-color: var(--gold-primary);
+      box-shadow: 0 0 30px rgba(212, 175, 55, 0.1);
+    }
+
+    /* ═══════════════════════════════════════════════
+       INSTALL SECTION
+       ═══════════════════════════════════════════════ */
+    .install-section {
+      position: relative;
+      z-index: 1;
+      padding: 80px 0 100px;
+    }
+
+    .install-cards {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+    }
+
+    .install-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: 36px;
+      transition: all 0.3s ease;
+    }
+
+    .install-card:hover {
+      border-color: var(--border-gold);
+      box-shadow: var(--shadow-gold);
+    }
+
+    .install-card-title {
+      font-family: var(--font-heading);
+      font-size: 1.15rem;
+      color: var(--gold-light);
+      margin-bottom: 8px;
+      font-weight: 700;
+    }
+
+    .install-card-desc {
+      color: var(--text-muted);
+      font-family: var(--font-ui);
+      font-size: 0.88rem;
+      margin-bottom: 20px;
+    }
+
+    .install-card pre {
+      background: var(--bg-card);
+      padding: 18px;
+      border-radius: var(--radius-sm);
+      color: var(--gold-light);
+      font-size: 0.88rem;
+      border: 1px solid var(--border-subtle);
+      overflow-x: auto;
+      line-height: 1.8;
+    }
+
+    /* ═══════════════════════════════════════════════
+       FOOTER
+       ═══════════════════════════════════════════════ */
     footer {
+      position: relative;
+      z-index: 1;
       border-top: 1px solid var(--border-subtle);
-      padding: 50px 0;
-      color: var(--text-dim);
-      font-size: 0.9rem;
+      padding: 60px 0 40px;
       text-align: center;
+    }
+
+    footer::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 200px;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--gold-primary), transparent);
+    }
+
+    .footer-brand {
+      font-family: var(--font-display);
+      font-size: 1.3rem;
+      color: var(--gold-light);
+      margin-bottom: 20px;
+      letter-spacing: 2px;
+      text-shadow: 0 0 20px rgba(212, 175, 55, 0.3);
+    }
+
+    .footer-quote {
+      font-family: var(--font-body);
+      font-style: italic;
+      color: var(--text-muted);
+      font-size: 1.05rem;
+      max-width: 500px;
+      margin: 0 auto 28px;
+      line-height: 1.7;
     }
 
     .footer-links {
       display: flex;
       justify-content: center;
-      gap: 24px;
-      margin-bottom: 16px;
+      gap: 28px;
+      margin-bottom: 24px;
+      font-family: var(--font-ui);
     }
 
     .footer-links a {
       color: var(--text-muted);
+      font-size: 0.88rem;
+      font-weight: 500;
     }
 
     .footer-links a:hover {
-      color: var(--text-main);
+      color: var(--gold-light);
     }
 
-    /* Responsive */
-    @media (max-width: 860px) {
-      .hero-title { font-size: 2.3rem; }
+    .footer-fine {
+      color: var(--text-dim);
+      font-size: 0.78rem;
+      font-family: var(--font-ui);
+    }
+
+    /* ═══════════════════════════════════════════════
+       RESPONSIVE
+       ═══════════════════════════════════════════════ */
+    @media (max-width: 900px) {
       .comparison-grid { grid-template-columns: 1fr; }
-      .features-grid { grid-template-columns: 1fr; }
+      .features-grid { grid-template-columns: 1fr 1fr; }
       .playground-inputs { grid-template-columns: 1fr; }
+      .install-cards { grid-template-columns: 1fr; }
       .nav-links { display: none; }
+      .mobile-menu-btn { display: block; }
+    }
+
+    @media (max-width: 640px) {
+      .hero { padding: 130px 0 60px; }
+      .features-grid { grid-template-columns: 1fr; }
+      .hero-actions { flex-direction: column; }
+      .tab-content { padding: 24px; }
+      .playground-box { padding: 24px; }
+      .install-card { padding: 24px; }
+    }
+
+    /* ═══════════════════════════════════════════════
+       TOLKIEN QUOTE BANNER
+       ═══════════════════════════════════════════════ */
+    .quote-banner {
+      position: relative;
+      z-index: 1;
+      padding: 60px 0;
+      text-align: center;
+    }
+
+    .quote-text {
+      font-family: var(--font-heading);
+      font-size: clamp(1.2rem, 3vw, 1.6rem);
+      color: var(--gold-light);
+      font-style: italic;
+      max-width: 700px;
+      margin: 0 auto 12px;
+      line-height: 1.6;
+      opacity: 0.85;
+      text-shadow: 0 0 30px rgba(212, 175, 55, 0.15);
+    }
+
+    .quote-author {
+      font-family: var(--font-ui);
+      font-size: 0.85rem;
+      color: var(--text-dim);
+      letter-spacing: 2px;
+      text-transform: uppercase;
     }
   </style>
 </head>
 <body>
 
+  <!-- Particle Canvas -->
+  <canvas id="particles-canvas"></canvas>
+  <div class="bg-atmosphere"></div>
+
   <!-- Navigation -->
-  <header>
+  <header id="site-header">
     <div class="container nav-container">
-      <div class="brand">
-        <div class="brand-mark">T</div>
+      <a href="#" class="brand">
+        <div class="brand-ring">T</div>
         <span>TOLKIENIZER</span>
-      </div>
+      </a>
       <nav class="nav-links">
         <a href="#registers">Registers</a>
         <a href="#features">Features</a>
@@ -552,226 +1274,470 @@
           GitHub
         </a>
       </nav>
+      <button class="mobile-menu-btn" aria-label="Menu">☰</button>
     </div>
   </header>
 
   <!-- Hero -->
   <section class="hero">
     <div class="container">
-      <div class="badge-pill">Native C99 • Free & Open Source • Vibe-Coded</div>
-      <h1 class="hero-title">Transmute Ordinary Words<br>into Middle-earth Prose</h1>
-      <p class="hero-subtitle">
-        A lightweight native CLI that transforms everyday logs, git commits, and messages into the majestic, epic high-fantasy prose of J.R.R. Tolkien.
+      <div class="hero-badge animate-on-scroll">
+        <span class="badge-dot"></span>
+        Native C99 — Lightning Fast
+      </div>
+
+      <h1 class="hero-title animate-on-scroll delay-1">Tolkienizer</h1>
+
+      <p class="hero-subtitle animate-on-scroll delay-2">
+        <span id="typed-text"></span><span class="typed-cursor">|</span>
       </p>
 
-      <!-- Install box -->
-      <div class="install-box">
-        <div class="install-command">
+      <div class="install-bar animate-on-scroll delay-3">
+        <div class="install-cmd">
           <span class="install-prompt">$</span>
-          <code id="cmd-install">brew install nnevskij/tap/tolkienizer</code>
+          <span id="cmd-install">brew install nnevskij/tap/tolkienizer</span>
         </div>
         <button class="copy-btn" onclick="copyInstallCmd()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+          </svg>
           <span id="copy-label">Copy</span>
         </button>
       </div>
 
-      <!-- Demo Video/GIF window -->
-      <div class="demo-window">
+      <div class="hero-actions animate-on-scroll delay-4">
+        <a href="#install" class="btn-primary">
+          ⚔ Begin Your Quest
+        </a>
+        <a href="https://github.com/nnevskij/tolkienizer" target="_blank" rel="noopener" class="btn-secondary">
+          View on GitHub →
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Demo Terminal -->
+  <section class="demo-section">
+    <div class="container">
+      <div class="demo-window animate-scale">
         <div class="window-header">
-          <div class="window-dot dot-red"></div>
-          <div class="window-dot dot-yellow"></div>
-          <div class="window-dot dot-green"></div>
-          <div class="window-title">tolkienizer — terminal session</div>
+          <span class="window-dot dot-red"></span>
+          <span class="window-dot dot-yellow"></span>
+          <span class="window-dot dot-green"></span>
+          <span class="window-title">tolkienizer — zsh — 120×32</span>
         </div>
-        <img src="assets/demo.gif" alt="Tolkienizer terminal session demonstration">
+        <img src="assets/demo.gif" alt="tolkienizer demo showing text transformation" loading="lazy">
       </div>
     </div>
   </section>
 
-  <!-- Four Registers Comparison -->
-  <section id="registers" class="container">
-    <h2 class="section-title">The Four Narrative Registers</h2>
-    <p class="section-subtitle">Choose the voice of Middle-earth that matches your moment.</p>
+  <!-- Tolkien Quote -->
+  <div class="quote-banner">
+    <div class="container animate-on-scroll">
+      <p class="quote-text">"Not all those who wander are lost."</p>
+      <p class="quote-author">— J.R.R. Tolkien, The Fellowship of the Ring</p>
+    </div>
+  </div>
 
-    <div class="registers-box">
-      <div class="register-tabs">
-        <button class="tab-btn active" onclick="switchRegister('epic')">Epic (Default)</button>
-        <button class="tab-btn" onclick="switchRegister('hobbit')">The Shire</button>
-        <button class="tab-btn" onclick="switchRegister('elvish')">Elven Havens</button>
-        <button class="tab-btn" onclick="switchRegister('mordor')">Dark Tower</button>
+  <div class="rune-divider animate-on-scroll">
+    <span class="rune-symbol">✦</span>
+  </div>
+
+  <!-- Registers Section -->
+  <section id="registers" class="section">
+    <div class="container">
+      <div class="section-header animate-on-scroll">
+        <div class="section-tag">Four Narrative Voices</div>
+        <h2 class="section-title">The Registers of Middle-earth</h2>
+        <p class="section-subtitle">Each style captures a distinct voice from Tolkien's legendarium, transforming mundane words into mythic prose.</p>
       </div>
-      <div class="tab-content">
-        <div class="comparison-grid">
-          <div class="box-before">
-            <div class="box-header">
-              <span class="tag-before">Input Text (Everyday modern)</span>
+
+      <div class="registers-box animate-on-scroll delay-2">
+        <div class="register-tabs">
+          <button class="tab-btn active" onclick="switchRegister('epic', this)">
+            <span class="tab-icon">⚔️</span> Epic
+          </button>
+          <button class="tab-btn" onclick="switchRegister('hobbit', this)">
+            <span class="tab-icon">🏡</span> Hobbit
+          </button>
+          <button class="tab-btn" onclick="switchRegister('elvish', this)">
+            <span class="tab-icon">✨</span> Elvish
+          </button>
+          <button class="tab-btn" onclick="switchRegister('mordor', this)">
+            <span class="tab-icon">🔥</span> Mordor
+          </button>
+        </div>
+
+        <div class="tab-content">
+          <div class="style-tag" id="reg-style-tag">Epic High Fantasy</div>
+          <div class="comparison-grid">
+            <div class="box-before">
+              <div class="box-header">
+                <span class="header-dot dim"></span>
+                <span class="tag-before">Original Text</span>
+              </div>
+              <p class="box-text" id="reg-before">"The database server crashed due to memory exhaustion"</p>
             </div>
-            <div class="box-text" id="reg-before">
-              "The database server crashed due to memory exhaustion"
+            <div class="box-after">
+              <div class="box-header">
+                <span class="header-dot gold"></span>
+                <span class="tag-after">Tolkienized</span>
+              </div>
+              <p class="box-text" id="reg-after">"The great engine of the data-vault hath fallen into darkness, brought low by the relentless tide of exhaustion."</p>
             </div>
           </div>
-          <div class="box-after">
-            <div class="box-header">
-              <span class="tag-after" id="reg-style-tag">Epic Prose</span>
-              <span style="font-size: 0.8rem; color: var(--text-dim);">-s epic</span>
-            </div>
-            <div class="box-text" id="reg-after">
-              "The great engine of the data-vault hath fallen into darkness, brought low by the relentless tide of exhaustion."
-            </div>
-          </div>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- Interactive Live Playground (Offline Mock Preview) -->
-  <section id="playground" class="container">
-    <h2 class="section-title">Interactive Transmutation</h2>
-    <p class="section-subtitle">Experience how tolkienizer reshapes colloquial thoughts into legend.</p>
+  <div class="rune-divider animate-on-scroll">
+    <span class="rune-symbol">◆</span>
+  </div>
 
-    <div class="playground-box">
-      <div class="playground-inputs">
-        <input type="text" id="play-input" class="input-field" value="I forgot to send the meeting notes before lunch" placeholder="Type any modern sentence...">
-        <select id="play-style" class="select-field">
-          <option value="epic">Epic Style</option>
-          <option value="hobbit" selected>Shire / Hobbit</option>
-          <option value="elvish">Elven Havens</option>
-          <option value="mordor">Shadow of Mordor</option>
-        </select>
-        <select id="play-lang" class="select-field">
-          <option value="en">English</option>
-          <option value="it">Italiano</option>
-        </select>
-        <button class="btn-transmute" onclick="runPlayground()">Transmute</button>
+  <!-- Features -->
+  <section id="features" class="section">
+    <div class="container">
+      <div class="section-header animate-on-scroll">
+        <div class="section-tag">Forged in C99</div>
+        <h2 class="section-title">Powers of the Tolkienizer</h2>
+        <p class="section-subtitle">Crafted with the precision of Elven smithwork and the raw might of Dwarven forges.</p>
       </div>
 
-      <div class="playground-output" id="play-output">
-        "Before the bell of noon had rung, my mind was troubled, for the scribed words of our council had slipped like morning mist from my remembrance."
+      <div class="features-grid">
+        <div class="feature-card animate-on-scroll delay-1">
+          <div class="feature-icon">⚡</div>
+          <h3 class="feature-title">Native C Performance</h3>
+          <p class="feature-desc">Built in clean C99 with libcurl and cJSON. Instant startup, minimal footprint — no heavy runtimes or interpreters needed.</p>
+        </div>
+
+        <div class="feature-card animate-on-scroll delay-2">
+          <div class="feature-icon">🌍</div>
+          <h3 class="feature-title">Multi-Language Lore</h3>
+          <p class="feature-desc">English, Italian, Spanish, French, German, Auto-detect, or any custom language. Every tongue receives the gift of Tolkien's voice.</p>
+        </div>
+
+        <div class="feature-card animate-on-scroll delay-3">
+          <div class="feature-icon">🤖</div>
+          <h3 class="feature-title">Multi-Provider AI</h3>
+          <p class="feature-desc">OpenAI, Groq, Gemini, OpenRouter, Ollama, or any custom endpoint. Choose the oracle that best suits your journey.</p>
+        </div>
+
+        <div class="feature-card animate-on-scroll delay-4">
+          <div class="feature-icon">🏠</div>
+          <h3 class="feature-title">Local &amp; Offline via Ollama</h3>
+          <p class="feature-desc">Works 100% locally and offline with Ollama. Zero external requests, zero subscriptions, complete privacy in your own Shire.</p>
+        </div>
+
+        <div class="feature-card animate-on-scroll delay-5">
+          <div class="feature-icon">🔐</div>
+          <h3 class="feature-title">Zero Hardcoded Keys</h3>
+          <p class="feature-desc">Interactive terminal wizard, environment variables, or per-invocation flags. Configurations guarded with strict POSIX 0600 permissions.</p>
+        </div>
+
+        <div class="feature-card animate-on-scroll delay-6">
+          <div class="feature-icon">⌨️</div>
+          <h3 class="feature-title">UNIX Pipeline Ready</h3>
+          <p class="feature-desc">Accepts text via stdin, files, or arguments. Pipe git diffs, commit logs, or server alerts directly into Tolkien prose.</p>
+        </div>
+
+        <div class="feature-card animate-on-scroll delay-7">
+          <div class="feature-icon">📦</div>
+          <h3 class="feature-title">Homebrew Packaging</h3>
+          <p class="feature-desc">One command to install, one command to upgrade. Automatic dependency resolution on macOS and Linux.</p>
+        </div>
+
+        <div class="feature-card animate-on-scroll delay-8">
+          <div class="feature-icon">📜</div>
+          <h3 class="feature-title">Four Tolkien Styles</h3>
+          <p class="feature-desc">Epic chronicles, cozy Shire tales, starlit Elven poetry, or the iron decrees of Mordor. Each a distinct voice from the legendarium.</p>
+        </div>
+
+        <div class="feature-card animate-on-scroll delay-8">
+          <div class="feature-icon">🧙</div>
+          <h3 class="feature-title">Custom System Prompts</h3>
+          <p class="feature-desc">Override any style with your own system prompt. Become the loremaster and shape the voice of transformation yourself.</p>
+        </div>
       </div>
     </div>
   </section>
 
-  <!-- Features Grid -->
-  <section id="features" class="container">
-    <h2 class="section-title">Engineered with Purpose</h2>
-    <p class="section-subtitle">Native C speed meets authentic high-fantasy lore.</p>
+  <div class="rune-divider animate-on-scroll">
+    <span class="rune-symbol">✦</span>
+  </div>
 
-    <div class="features-grid">
-      <div class="feature-card">
-        <div class="feature-icon">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
-          </svg>
-        </div>
-        <h3 class="feature-title">Pure Native C99</h3>
-        <p class="feature-desc">
-          No heavy runtimes, no 500MB node_modules, no python virtual environments. Links only against libcurl and cJSON. Instant startup.
-        </p>
+  <!-- Playground -->
+  <section id="playground" class="section">
+    <div class="container">
+      <div class="section-header animate-on-scroll">
+        <div class="section-tag">Enchanted Preview</div>
+        <h2 class="section-title">The Palantír of Prose</h2>
+        <p class="section-subtitle">Gaze into the seeing-stone and witness your words transmuted into the language of Middle-earth.</p>
       </div>
 
-      <div class="feature-card">
-        <div class="feature-icon">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="12" cy="12" r="10"/>
-            <path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
-          </svg>
+      <div class="playground-box animate-on-scroll delay-2">
+        <div class="playground-inputs">
+          <input type="text" class="input-field" id="play-input"
+                 placeholder="Speak your words, and they shall be transformed..."
+                 value="I forgot about the meeting this morning">
+          <select class="select-field" id="play-style">
+            <option value="epic">⚔️ Epic</option>
+            <option value="hobbit">🏡 Hobbit</option>
+            <option value="elvish">✨ Elvish</option>
+            <option value="mordor">🔥 Mordor</option>
+          </select>
+          <select class="select-field" id="play-lang">
+            <option value="en">English</option>
+            <option value="it">Italiano</option>
+          </select>
+          <button class="btn-transmute" onclick="runPlayground()">Transmute ✦</button>
         </div>
-        <h3 class="feature-title">Multi-Language Native</h3>
-        <p class="feature-desc">
-          English by default, with specialized literary pre-prompts for Italian (Alliata/Fatica register), Spanish, French, German, or auto-detect.
-        </p>
-      </div>
 
-      <div class="feature-card">
-        <div class="feature-icon">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <rect x="2" y="2" width="20" height="8" rx="2" ry="2"/>
-            <rect x="2" y="14" width="20" height="8" rx="2" ry="2"/>
-            <line x1="6" y1="6" x2="6.01" y2="6"/>
-            <line x1="6" y1="18" x2="6.01" y2="18"/>
-          </svg>
+        <div class="playground-output" id="play-output">
+          <em style="color: var(--text-dim); font-family: var(--font-body);">The output of your transformation shall appear here, inscribed in the tongue of the Eldar...</em>
         </div>
-        <h3 class="feature-title">Local & Offline via Ollama</h3>
-        <p class="feature-desc">
-          Works 100% locally and offline with Ollama (e.g. llama3). Zero external API requests, zero subscriptions, complete privacy.
-        </p>
-      </div>
-
-      <div class="feature-card">
-        <div class="feature-icon">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-          </svg>
-        </div>
-        <h3 class="feature-title">Zero Hardcoded Keys</h3>
-        <p class="feature-desc">
-          Includes an interactive terminal wizard (<code>tolkienizer --config</code>). Configurations are saved with strict POSIX 0600 file permissions.
-        </p>
-      </div>
-
-      <div class="feature-card">
-        <div class="feature-icon">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <polyline points="4 17 10 11 4 5"/>
-            <line x1="12" y1="19" x2="20" y2="19"/>
-          </svg>
-        </div>
-        <h3 class="feature-title">UNIX Pipeline Ready</h3>
-        <p class="feature-desc">
-          Accepts text via standard input, files (-f), or arguments. Pipe git diffs, commit logs, or server alerts directly into Tolkien prose.
-        </p>
-      </div>
-
-      <div class="feature-card">
-        <div class="feature-icon">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M20 7h-7m7 5h-7m7 5h-7M4 7h.01M4 12h.01M4 17h.01"/>
-          </svg>
-        </div>
-        <h3 class="feature-title">Homebrew Packaging</h3>
-        <p class="feature-desc">
-          Installable and upgradeable with standard Homebrew commands on macOS and Linux with automatic dependency resolution.
-        </p>
       </div>
     </div>
   </section>
 
-  <!-- Install Section -->
-  <section id="install" class="container" style="margin-bottom: 90px;">
-    <h2 class="section-title">Get Started in Seconds</h2>
-    <p class="section-subtitle">Install tolkienizer via your preferred package manager or build from source.</p>
+  <!-- Another Tolkien Quote -->
+  <div class="quote-banner">
+    <div class="container animate-on-scroll">
+      <p class="quote-text">"All we have to decide is what to do with the time that is given us."</p>
+      <p class="quote-author">— Gandalf, The Fellowship of the Ring</p>
+    </div>
+  </div>
 
-    <div class="registers-box" style="padding: 32px;">
-      <h4 style="margin-bottom: 16px; color: var(--gold-light); font-family: 'Cinzel', serif;">Homebrew (macOS & Linux)</h4>
-      <pre style="background: var(--bg-card); padding: 16px; border-radius: 6px; margin-bottom: 24px; color: var(--text-main); border: 1px solid var(--border-subtle);"><code>brew tap nnevskij/tap
-brew install tolkienizer</code></pre>
+  <div class="rune-divider animate-on-scroll">
+    <span class="rune-symbol">◆</span>
+  </div>
 
-      <h4 style="margin-bottom: 16px; color: var(--gold-light); font-family: 'Cinzel', serif;">From Source (Any UNIX)</h4>
-      <pre style="background: var(--bg-card); padding: 16px; border-radius: 6px; color: var(--text-main); border: 1px solid var(--border-subtle);"><code>git clone https://github.com/nnevskij/tolkienizer.git
+  <!-- Install -->
+  <section id="install" class="install-section">
+    <div class="container">
+      <div class="section-header animate-on-scroll">
+        <div class="section-tag">Join the Fellowship</div>
+        <h2 class="section-title">Begin Your Quest</h2>
+        <p class="section-subtitle">Choose your path and install tolkienizer in seconds.</p>
+      </div>
+
+      <div class="install-cards">
+        <div class="install-card animate-slide-left">
+          <h3 class="install-card-title">🍺 Homebrew (macOS &amp; Linux)</h3>
+          <p class="install-card-desc">The swiftest path — recommended for most travellers.</p>
+          <pre><code><span style="color: var(--text-dim);"># Add the tap and install</span>
+brew tap nnevskij/tap
+brew install tolkienizer
+
+<span style="color: var(--text-dim);"># Upgrade in the future</span>
+brew update && brew upgrade tolkienizer</code></pre>
+        </div>
+
+        <div class="install-card animate-slide-right">
+          <h3 class="install-card-title">🔨 Build from Source</h3>
+          <p class="install-card-desc">For those who forge their own tools in the fires of craft.</p>
+          <pre><code>git clone https://github.com/nnevskij/tolkienizer.git
 cd tolkienizer
+
+<span style="color: var(--text-dim);"># Interactive installer</span>
+./install.sh
+
+<span style="color: var(--text-dim);"># Or standard Makefile</span>
 make && make install</code></pre>
+        </div>
+      </div>
     </div>
   </section>
 
   <!-- Footer -->
   <footer>
     <div class="container">
-      <div class="footer-links">
+      <div class="footer-brand animate-on-scroll">TOLKIENIZER</div>
+      <p class="footer-quote animate-on-scroll delay-1">
+        "The world is indeed full of peril, and in it there are many dark places; but still there is much that is fair."
+      </p>
+      <div class="footer-links animate-on-scroll delay-2">
         <a href="https://github.com/nnevskij/tolkienizer" target="_blank" rel="noopener">GitHub</a>
         <a href="https://github.com/nnevskij/homebrew-tap" target="_blank" rel="noopener">Homebrew Tap</a>
         <a href="https://github.com/nnevskij/tolkienizer/blob/main/LICENSE" target="_blank" rel="noopener">MIT License</a>
       </div>
-      <p style="margin-bottom: 8px;">
-        Tolkienizer is an open-source project created via vibe-coding with love for high-fantasy literature.
-      </p>
-      <p style="color: var(--text-dim); font-size: 0.8rem;">
-        Not affiliated with the Tolkien Estate. J.R.R. Tolkien's works are copyrighted by their respective holders.
+      <p class="footer-fine animate-on-scroll delay-3">
+        Open-source, vibe-coded with love for Tolkien's legendarium. Not affiliated with the Tolkien Estate.
       </p>
     </div>
   </footer>
 
   <script>
+    /* ═══════════════════════════════════════════════
+       PARTICLE SYSTEM — FLOATING EMBERS & STARLIGHT
+       ═══════════════════════════════════════════════ */
+    const canvas = document.getElementById('particles-canvas');
+    const ctx = canvas.getContext('2d');
+    let particles = [];
+    let animFrame;
+
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+
+    class Particle {
+      constructor() {
+        this.reset();
+      }
+
+      reset() {
+        this.x = Math.random() * canvas.width;
+        this.y = Math.random() * canvas.height;
+        this.size = Math.random() * 2 + 0.5;
+        this.speedX = (Math.random() - 0.5) * 0.3;
+        this.speedY = -Math.random() * 0.5 - 0.1;
+        this.opacity = Math.random() * 0.5 + 0.1;
+        this.fadeDir = Math.random() > 0.5 ? 1 : -1;
+        this.fadeSpeed = Math.random() * 0.005 + 0.002;
+
+        // Golden amber tones
+        const hue = 35 + Math.random() * 20;
+        const sat = 70 + Math.random() * 30;
+        const light = 55 + Math.random() * 25;
+        this.color = `hsla(${hue}, ${sat}%, ${light}%,`;
+      }
+
+      update() {
+        this.x += this.speedX;
+        this.y += this.speedY;
+        this.opacity += this.fadeDir * this.fadeSpeed;
+
+        if (this.opacity >= 0.6) this.fadeDir = -1;
+        if (this.opacity <= 0.05) this.fadeDir = 1;
+
+        if (this.y < -10 || this.x < -10 || this.x > canvas.width + 10) {
+          this.reset();
+          this.y = canvas.height + 10;
+        }
+      }
+
+      draw() {
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+        ctx.fillStyle = this.color + this.opacity + ')';
+        ctx.fill();
+
+        // Glow effect
+        if (this.size > 1.2) {
+          ctx.beginPath();
+          ctx.arc(this.x, this.y, this.size * 3, 0, Math.PI * 2);
+          ctx.fillStyle = this.color + (this.opacity * 0.15) + ')';
+          ctx.fill();
+        }
+      }
+    }
+
+    function initParticles() {
+      resizeCanvas();
+      const count = Math.min(Math.floor(window.innerWidth * 0.06), 80);
+      particles = [];
+      for (let i = 0; i < count; i++) {
+        particles.push(new Particle());
+      }
+    }
+
+    function animateParticles() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      particles.forEach(p => {
+        p.update();
+        p.draw();
+      });
+      animFrame = requestAnimationFrame(animateParticles);
+    }
+
+    window.addEventListener('resize', () => {
+      resizeCanvas();
+    });
+
+    // Reduce particles on low-end devices
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (!prefersReducedMotion) {
+      initParticles();
+      animateParticles();
+    }
+
+    /* ═══════════════════════════════════════════════
+       SCROLL-TRIGGERED ANIMATIONS (IntersectionObserver)
+       ═══════════════════════════════════════════════ */
+    const observerOptions = {
+      threshold: 0.12,
+      rootMargin: '0px 0px -40px 0px'
+    };
+
+    const scrollObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+          scrollObserver.unobserve(entry.target);
+        }
+      });
+    }, observerOptions);
+
+    document.querySelectorAll(
+      '.animate-on-scroll, .animate-slide-left, .animate-slide-right, .animate-scale'
+    ).forEach(el => scrollObserver.observe(el));
+
+    /* ═══════════════════════════════════════════════
+       HEADER SCROLL EFFECT
+       ═══════════════════════════════════════════════ */
+    const header = document.getElementById('site-header');
+    window.addEventListener('scroll', () => {
+      header.classList.toggle('scrolled', window.scrollY > 50);
+    }, { passive: true });
+
+    /* ═══════════════════════════════════════════════
+       TYPING EFFECT
+       ═══════════════════════════════════════════════ */
+    const phrases = [
+      "Transmute ordinary words into the mythic prose of J.R.R. Tolkien.",
+      "Transform commit messages into the chronicles of Middle-earth.",
+      "Elevate error logs to the solemn gravity of the Silmarillion.",
+      "Shape everyday language with the cadence of the Eldar."
+    ];
+
+    let phraseIndex = 0;
+    let charIndex = 0;
+    let isDeleting = false;
+    let typeDelay = 60;
+    const typedEl = document.getElementById('typed-text');
+
+    function typeEffect() {
+      const current = phrases[phraseIndex];
+
+      if (isDeleting) {
+        typedEl.textContent = current.substring(0, charIndex - 1);
+        charIndex--;
+        typeDelay = 30;
+      } else {
+        typedEl.textContent = current.substring(0, charIndex + 1);
+        charIndex++;
+        typeDelay = 55 + Math.random() * 40;
+      }
+
+      if (!isDeleting && charIndex === current.length) {
+        isDeleting = true;
+        typeDelay = 2500;
+      } else if (isDeleting && charIndex === 0) {
+        isDeleting = false;
+        phraseIndex = (phraseIndex + 1) % phrases.length;
+        typeDelay = 400;
+      }
+
+      setTimeout(typeEffect, typeDelay);
+    }
+
+    setTimeout(typeEffect, 800);
+
+    /* ═══════════════════════════════════════════════
+       COPY INSTALL COMMAND
+       ═══════════════════════════════════════════════ */
     function copyInstallCmd() {
       const text = document.getElementById('cmd-install').innerText;
       navigator.clipboard.writeText(text).then(() => {
@@ -781,6 +1747,9 @@ make && make install</code></pre>
       });
     }
 
+    /* ═══════════════════════════════════════════════
+       REGISTER SWITCHER (with animation)
+       ═══════════════════════════════════════════════ */
     const registers = {
       epic: {
         tag: 'Epic High Fantasy',
@@ -788,32 +1757,56 @@ make && make install</code></pre>
         after: '"The great engine of the data-vault hath fallen into darkness, brought low by the relentless tide of exhaustion."'
       },
       hobbit: {
-        tag: 'The Shire / Halfling Voice',
+        tag: 'The Shire — Halfling Voice',
         before: '"I have to go buy tea and butter at the grocery store"',
         after: '"I must take a jaunt to the market for fine tea and butter, as a respectable halfling\'s pantry should never be caught in want."'
       },
       elvish: {
-        tag: 'Elven Havens / Starlight of Eldar',
+        tag: 'Elven Havens — Starlight of the Eldar',
         before: '"The security audit completed with zero vulnerabilities"',
-        after: '"May the starlight of Elbereth guide our journey, for ancient memories fade not and peace rests upon the woodland realm."'
+        after: '"The vigil of the watchers hath yielded its silent grace: no shadow passed the gates, and the realm stands unblemished beneath the stars."'
       },
       mordor: {
-        tag: 'Dark Tower / Iron Decree',
+        tag: 'Dark Tower — Iron Decree',
         before: '"Deploy the release before Friday or face consequences"',
         after: '"The release must be unleashed upon the world ere Friday\'s twilight, lest the shadows claim your delay."'
       }
     };
 
-    function switchRegister(style) {
+    function switchRegister(style, btn) {
       document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-      event.target.classList.add('active');
+      btn.classList.add('active');
 
       const data = registers[style];
-      document.getElementById('reg-style-tag').innerText = data.tag;
-      document.getElementById('reg-before').innerText = data.before;
-      document.getElementById('reg-after').innerText = data.after;
+      const tag = document.getElementById('reg-style-tag');
+      const before = document.getElementById('reg-before');
+      const after = document.getElementById('reg-after');
+
+      // Animate out
+      [tag, before, after].forEach(el => {
+        el.style.opacity = '0';
+        el.style.transform = 'translateY(10px)';
+      });
+
+      setTimeout(() => {
+        tag.innerText = data.tag;
+        before.innerText = data.before;
+        after.innerText = data.after;
+
+        // Animate in
+        [tag, before, after].forEach((el, i) => {
+          setTimeout(() => {
+            el.style.transition = 'opacity 0.4s ease, transform 0.4s ease';
+            el.style.opacity = '1';
+            el.style.transform = 'translateY(0)';
+          }, i * 80);
+        });
+      }, 250);
     }
 
+    /* ═══════════════════════════════════════════════
+       PLAYGROUND (mock transformation)
+       ═══════════════════════════════════════════════ */
     const mockDictionary = {
       epic: {
         en: "The solemn scrolls of our assembly were scattered like dry leaves before the gale, yet destiny hath preserved our intent.",
@@ -840,17 +1833,37 @@ make && make install</code></pre>
       const output = document.getElementById('play-output');
 
       if (!input) {
-        output.innerText = '"Silence fell upon the halls, for no word was spoken."';
+        output.innerHTML = '<em>"Silence fell upon the halls, for no word was spoken."</em>';
         return;
       }
 
-      output.innerText = 'Consulting the Lore of Middle-earth...';
+      output.classList.add('active');
+      output.innerHTML = '<em style="color: var(--text-dim);">✦ Consulting the Lore of Middle-earth...</em>';
 
+      // Simulated typing reveal
       setTimeout(() => {
-        const text = mockDictionary[style][lang] || mockDictionary.epic.en;
-        output.innerText = `"${text}"`;
-      }, 400);
+        const text = mockDictionary[style]?.[lang] || mockDictionary.epic.en;
+        let i = 0;
+        output.textContent = '';
+
+        function typeChar() {
+          if (i < text.length) {
+            output.textContent += text[i];
+            i++;
+            setTimeout(typeChar, 18 + Math.random() * 12);
+          } else {
+            output.textContent = `"${text}"`;
+          }
+        }
+
+        typeChar();
+      }, 600);
     }
+
+    // Allow pressing Enter in the input field
+    document.getElementById('play-input').addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') runPlayground();
+    });
   </script>
 </body>
 </html>
